@@ -1,55 +1,62 @@
-window.onload = function () {
+window.initAuth = function initAuth() {
+  firebase.auth().onAuthStateChanged(user => {
     const loginContainer = document.getElementById('login-container');
     const signupContainer = document.getElementById('signup-container');
     const warehouseApp = document.getElementById('warehouse-app');
     const logoutBtn = document.getElementById('logout-btn');
 
-    const loginBtn = document.getElementById('login-btn');
-    const signupBtn = document.getElementById('signup-btn');
-    const showSignup = document.getElementById('show-signup');
-    const showLogin = document.getElementById('show-login');
+    if (user) {
+      loginContainer.style.display = 'none';
+      signupContainer.style.display = 'none';
+      warehouseApp.style.display = 'block';
+      logoutBtn.style.display = 'block';
 
-    loginBtn.onclick = () => {
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-        firebase.auth().signInWithEmailAndPassword(email, password)
-            .catch(err => alert(err.message));
-    };
+      // Load + init app
+      window.loadWarehouseData();
+      window.initWarehouseApp();
+    } else {
+      loginContainer.style.display = 'flex';
+      signupContainer.style.display = 'none';
+      warehouseApp.style.display = 'none';
+      logoutBtn.style.display = 'none';
+    }
+  });
+};
 
-    signupBtn.onclick = () => {
-        const email = document.getElementById('signup-email').value;
-        const password = document.getElementById('signup-password').value;
-        firebase.auth().createUserWithEmailAndPassword(email, password)
-            .catch(err => alert(err.message));
-    };
+// --- Initialize App ---
+window.onload = function() {
+  document.getElementById('login-btn').addEventListener('click', () => {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
 
-    logoutBtn.onclick = () => firebase.auth().signOut();
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .catch(error => alert(error.message));
+  });
 
-    showSignup.onclick = () => {
-        loginContainer.style.display = 'none';
-        signupContainer.style.display = 'flex';
-    };
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    firebase.auth().signOut();
+  });
 
-    showLogin.onclick = () => {
-        signupContainer.style.display = 'none';
-        loginContainer.style.display = 'flex';
-    };
+  document.getElementById('show-signup').addEventListener('click', () => {
+    document.getElementById('login-container').style.display = 'none';
+    document.getElementById('signup-container').style.display = 'flex';
+  });
 
-    firebase.auth().onAuthStateChanged(user => {
-        if (user) {
-            loginContainer.style.display = 'none';
-            signupContainer.style.display = 'none';
-            warehouseApp.style.display = 'block';
-            logoutBtn.style.display = 'block';
+  document.getElementById('show-login').addEventListener('click', () => {
+    document.getElementById('signup-container').style.display = 'none';
+    document.getElementById('login-container').style.display = 'flex';
+  });
 
-            createGridLabels();
-            setupEventListeners();
-            loadWarehouseData();
-        } else {
-            loginContainer.style.display = 'flex';
-            signupContainer.style.display = 'none';
-            warehouseApp.style.display = 'none';
-            logoutBtn.style.display = 'none';
-        }
-    });
+  document.getElementById('signup-btn').addEventListener('click', () => {
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
+
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+      .then(() => {
+        alert("Sign up successful! You are now logged in.");
+      })
+      .catch(error => alert(error.message));
+  });
+
+  window.initAuth();
 };
