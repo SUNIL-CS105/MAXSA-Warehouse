@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MAXSA Warehouse Map with Resizable Pallets</title>
+<link rel="stylesheet" href="css/styles.css" />
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+    <!-- Login & Signup -->
+    <div id="login-container">...</div>
+    <div id="signup-container" style="display:none;">...</div>
+    <div id="loading-indicator">Loading warehouse data...</div>
+    <button id="logout-btn">Logout</button>
+
+    <!-- Warehouse Map -->
+    <div id="warehouse-app" style="display:none;">
+        <h2>MAXSA Warehouse Map</h2>
+        <div id="warehouse-container">
+            <div class="grid-stack"></div>
+
+            <div id="add-product-panel" class="control-panel">
+                <input type="text" id="new-item" placeholder="Item #" />
+                <input type="number" id="new-q" placeholder="Quantity" min="1" />
+                <button id="add-product-btn">➕ Add New Product</button>
+            </div>
+
+            <div id="inventory-summary-panel" class="control-panel" title="Show total quantities of all products">
+                📊 Show Inventory Summary
+                <div id="inventory-summary-output" style="display:none;"></div>
+            </div>
+
+            <div id="history-panel" class="control-panel">
+                History
+                <div class="history-icons">
+                    <div class="history-icon-btn new-product" data-type="new-product" title="New Products">📦</div>
+                    <div class="history-icon-btn shipped" data-type="shipped" title="Shipped Products">🚚</div>
+                    <div class="history-icon-btn office" data-type="to-office" title="To Office Products">🏢</div>
+                </div>
+            </div>
+        </div>
+        <div id="history-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h3 id="history-modal-title">History Log</h3>
+                <div id="history-output"></div>
+            </div>
+        </div>
+    </div>
+
+<!-- Scripts -->
+<script src="js/firebase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/warehouse.js"></script>
+<script src="js/events.js"></script>
+</body>
+</html>
