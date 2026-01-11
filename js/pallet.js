@@ -7,8 +7,6 @@ window.Pallet = class Pallet {
 
     this.el = document.createElement("div");
     this.el.className = "pallet";
-
-    // IMPORTANT: do NOT use HTML5 draggable
     this.el.setAttribute("draggable", "false");
 
     this.el.dataset.id = id;
@@ -33,37 +31,30 @@ window.Pallet = class Pallet {
   addEventListeners() {
     // ---------- TRUE DRAG (mouse + touch) ----------
     this.el.addEventListener("pointerdown", (e) => {
-      // If clicking split arrow, don't drag
       if (e.target === this.splitArrow) return;
-
       e.preventDefault();
 
       const container = document.querySelector(".grid-stack");
       const containerRect = container.getBoundingClientRect();
-      const palletRect = this.el.getBoundingClientRect();
 
-      // Convert pointer position to "unscaled" map coordinates
+      // pointer position in unscaled coordinates
       const pointerX = (e.clientX - containerRect.left) / window.scale;
       const pointerY = (e.clientY - containerRect.top) / window.scale;
 
-      // Current pallet position in unscaled coords
       const currentLeft = parseFloat(this.el.style.left || "0");
       const currentTop = parseFloat(this.el.style.top || "0");
 
-      // Offset between pointer and top-left of pallet
       this.dragOffsetX = pointerX - currentLeft;
       this.dragOffsetY = pointerY - currentTop;
 
       this.el.classList.add("dragging");
       window.isDraggingPallet = true;
 
-      // Capture pointer so we keep receiving move events
       this.el.setPointerCapture(e.pointerId);
     });
 
     this.el.addEventListener("pointermove", (e) => {
       if (!window.isDraggingPallet || !this.el.classList.contains("dragging")) return;
-
       e.preventDefault();
 
       const container = document.querySelector(".grid-stack");
@@ -81,26 +72,29 @@ window.Pallet = class Pallet {
 
     this.el.addEventListener("pointerup", (e) => {
       if (!this.el.classList.contains("dragging")) return;
-
       e.preventDefault();
 
       this.el.classList.remove("dragging");
       window.isDraggingPallet = false;
 
-      // Use viewport coordinates directly for elementFromPoint
-        // Temporarily ignore the pallet so elementFromPoint can "see" the cell under it
-    this.el.style.pointerEvents = "none";
-    const loc = window.findLocationUnder(e.clientX, e.clientY);
-    this.el.style.pointerEvents = "auto";
+      // IMPORTANT: detect the cell UNDER the pallet at drop time
+      // Step 1: ignore the pallet itself
+      this.el.style.pointerEvents = "none";
 
-    if (loc) {
-    this.moveToLocation(loc, e.clientY); // pass drop Y position
-} 
-    else {
-    window.positionPalletInLocation(this);
-    }
+      // Step 2: find nearest label-cell using elementFromPoint + closest
+      const elUnder = document.elementFromPoint(e.clientX, e.clientY);
+      const cell = elUnder ? elUnder.closest(".label-cell") : null;
+      const loc = cell ? cell.dataset.location : null;
 
+      // Step 3: restore pointer events
+      this.el.style.pointerEvents = "auto";
 
+      if (loc) {
+        this.moveToLocation(loc, e.clientY); // allow stacking position based on drop Y
+      } else {
+        // dropped outside a cell -> snap back to its current location
+        window.positionPalletInLocation(this);
+      }
     });
 
     this.el.addEventListener("pointercancel", () => {
@@ -135,11 +129,14 @@ window.Pallet = class Pallet {
     });
   }
 
-  moveToLocation(newLoc, dropClientY = null)
- {
+  moveToLocation(newLoc, dropClientY = null) {
     const oldLoc = this.location;
+
+    // If dropping into same location: reorder inside stack based on drop Y
     if (newLoc === oldLoc) {
-      window.positionPalletInLocation(this);
+      this.reorderWithinLocation(newLoc, dropClientY);
+      window.saveWarehouseData();
+      window.adjustPalletSizesAtLocation(newLoc);
       return;
     }
 
@@ -149,32 +146,27 @@ window.Pallet = class Pallet {
       if (window.palletsByLocation[oldLoc].length === 0) delete window.palletsByLocation[oldLoc];
     }
 
-    // add to new stack
-// add to new stack (insert based on where user dropped inside the cell)
-if (!window.palletsByLocation[newLoc]) window.palletsByLocation[newLoc] = [];
-const stack = window.palletsByLocation[newLoc];
+    // add to new stack (insert based on where user dropped)
+    if (!window.palletsByLocation[newLoc]) window.palletsByLocation[newLoc] = [];
+    const stack = window.palletsByLocation[newLoc];
 
-// Default: append
-let insertIndex = stack.length;
+    let insertIndex = stack.length; // default append
 
-if (dropClientY !== null) {
-  const locEl = Array.from(document.querySelectorAll('.label-cell'))
-    .find(el => el.dataset.location === newLoc);
+    if (dropClientY !== null) {
+      const locEl = Array.from(document.querySelectorAll(".label-cell"))
+        .find(el => el.dataset.location === newLoc);
 
-  if (locEl) {
-    const r = locEl.getBoundingClientRect(); // scaled rect
-    const relY = Math.min(Math.max(dropClientY - r.top, 0), r.height - 1);
+      if (locEl) {
+        const r = locEl.getBoundingClientRect(); // scaled rect
+        const relY = Math.min(Math.max(dropClientY - r.top, 0), r.height - 1);
+        const N = stack.length + 1;
+        const slotH = r.height / N;
+        insertIndex = Math.floor(relY / slotH);
+        insertIndex = Math.min(Math.max(insertIndex, 0), stack.length);
+      }
+    }
 
-    // if there will be N pallets after insert, divide the cell into N slots
-    const N = stack.length + 1;
-    const slotH = r.height / N;
-    insertIndex = Math.floor(relY / slotH);
-  }
-}
-
-// Insert pallet in that slot
-stack.splice(insertIndex, 0, this);
-
+    stack.splice(insertIndex, 0, this);
 
     this.location = newLoc;
     this.el.dataset.location = newLoc;
@@ -192,6 +184,38 @@ stack.splice(insertIndex, 0, this);
     window.saveWarehouseData();
     window.adjustPalletSizesAtLocation(oldLoc);
     window.adjustPalletSizesAtLocation(newLoc);
+  }
+
+  reorderWithinLocation(loc, dropClientY) {
+    const stack = window.palletsByLocation[loc] || [];
+    if (stack.length <= 1) {
+      window.positionPalletInLocation(this);
+      return;
+    }
+
+    // remove first
+    const idx = stack.indexOf(this);
+    if (idx >= 0) stack.splice(idx, 1);
+
+    // compute new index
+    let insertIndex = stack.length;
+
+    if (dropClientY !== null) {
+      const locEl = Array.from(document.querySelectorAll(".label-cell"))
+        .find(el => el.dataset.location === loc);
+
+      if (locEl) {
+        const r = locEl.getBoundingClientRect();
+        const relY = Math.min(Math.max(dropClientY - r.top, 0), r.height - 1);
+        const N = stack.length + 1;
+        const slotH = r.height / N;
+        insertIndex = Math.floor(relY / slotH);
+        insertIndex = Math.min(Math.max(insertIndex, 0), stack.length);
+      }
+    }
+
+    stack.splice(insertIndex, 0, this);
+    window.positionPalletInLocation(this);
   }
 
   remove() {
