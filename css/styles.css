@@ -59,7 +59,9 @@ h2 { margin-top: 0; }
   font-size: 12px;
   white-space: pre-line;
   transition: transform 0.2s ease-out;
+  touch-action: none;
 }
+
 .pallet.dragging { opacity: 0.6; cursor: grabbing; z-index: 1000; }
 
 .split-arrow {
