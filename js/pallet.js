@@ -88,13 +88,19 @@ window.Pallet = class Pallet {
       window.isDraggingPallet = false;
 
       // Use viewport coordinates directly for elementFromPoint
-      const loc = window.findLocationUnder(e.clientX, e.clientY);
-      if (loc) {
-        this.moveToLocation(loc);
-      } else {
-        // If dropped outside any location, snap back to its location
-        window.positionPalletInLocation(this);
-      }
+        // Temporarily ignore the pallet so elementFromPoint can "see" the cell under it
+    this.el.style.pointerEvents = "none";
+    const loc = window.findLocationUnder(e.clientX, e.clientY);
+    this.el.style.pointerEvents = "auto";
+
+    if (loc) {
+    this.moveToLocation(loc, e.clientY); // pass drop Y position
+} 
+    else {
+    window.positionPalletInLocation(this);
+    }
+
+
     });
 
     this.el.addEventListener("pointercancel", () => {
@@ -129,7 +135,8 @@ window.Pallet = class Pallet {
     });
   }
 
-  moveToLocation(newLoc) {
+  moveToLocation(newLoc, dropClientY = null)
+ {
     const oldLoc = this.location;
     if (newLoc === oldLoc) {
       window.positionPalletInLocation(this);
@@ -143,8 +150,31 @@ window.Pallet = class Pallet {
     }
 
     // add to new stack
-    if (!window.palletsByLocation[newLoc]) window.palletsByLocation[newLoc] = [];
-    window.palletsByLocation[newLoc].push(this);
+// add to new stack (insert based on where user dropped inside the cell)
+if (!window.palletsByLocation[newLoc]) window.palletsByLocation[newLoc] = [];
+const stack = window.palletsByLocation[newLoc];
+
+// Default: append
+let insertIndex = stack.length;
+
+if (dropClientY !== null) {
+  const locEl = Array.from(document.querySelectorAll('.label-cell'))
+    .find(el => el.dataset.location === newLoc);
+
+  if (locEl) {
+    const r = locEl.getBoundingClientRect(); // scaled rect
+    const relY = Math.min(Math.max(dropClientY - r.top, 0), r.height - 1);
+
+    // if there will be N pallets after insert, divide the cell into N slots
+    const N = stack.length + 1;
+    const slotH = r.height / N;
+    insertIndex = Math.floor(relY / slotH);
+  }
+}
+
+// Insert pallet in that slot
+stack.splice(insertIndex, 0, this);
+
 
     this.location = newLoc;
     this.el.dataset.location = newLoc;
