@@ -125,14 +125,6 @@ window.createGridLabels = function createGridLabels() {
   });
 };
 
-// (Optional legacy helper)
-window.findLocationUnder = function findLocationUnder(x, y) {
-  const el = document.elementFromPoint(x, y);
-  if (!el) return null;
-  const cell = el.closest(".label-cell");
-  return cell ? cell.dataset.location : null;
-};
-
 // ✅ Most reliable: rectangle hit-test (works even when pallet covers cell)
 window.getLocationAtClientPoint = function (clientX, clientY) {
   const cells = document.querySelectorAll(".label-cell");
@@ -158,12 +150,15 @@ window.createNewPallet = function createNewPallet(itemId, quantity, location = "
   const pallet = new window.Pallet(id, itemId, quantity, location);
 
   document.querySelector('.grid-stack').appendChild(pallet.el);
+
+  // add to global list
   window.pallets.push(pallet);
 
+  // add to location stack
   if (!window.palletsByLocation[location]) window.palletsByLocation[location] = [];
   window.palletsByLocation[location].push(pallet);
 
-  // ✅ Position all pallets in this location (supports overlap stacking)
+  // position stack
   window.adjustPalletSizesAtLocation(location);
 
   if (record) {
@@ -177,11 +172,16 @@ window.createNewPallet = function createNewPallet(itemId, quantity, location = "
 window.adjustPalletSizesAtLocation = function adjustPalletSizesAtLocation(location) {
   if (!location) return;
   const stack = window.palletsByLocation[location];
-  if (!stack) return;
-  stack.forEach(p => window.positionPalletInLocation(p));
+  if (!stack || stack.length === 0) return;
+
+  stack.forEach((p, i) => {
+    window.positionPalletInLocation(p);
+    // ensure correct click layer order
+    p.el.style.zIndex = 1000 + i;
+  });
 };
 
-// ✅ Overlapping stack: show about 1/4 of each pallet underneath
+// ✅ Overlapping stack: leaves a clearly visible strip of the lower pallets
 window.positionPalletInLocation = function positionPalletInLocation(pallet) {
   const location = pallet.location;
 
@@ -199,25 +199,27 @@ window.positionPalletInLocation = function positionPalletInLocation(pallet) {
   const idx = stack.indexOf(pallet);
   const total = stack.length;
 
-  // readable height (never taller than the cell)
-  const palletHeight = Math.min(40, height);
+  // Make each pallet readable
+  const palletHeight = Math.min(45, height);
 
-  // show ~1/4 of the pallet below => offset is 25% of pallet height
-  let offset = Math.floor(palletHeight * 0.25);
+  // SHOW strip of pallet underneath (this is the key!)
+  // You wanted ~1/4 visible; with a 45px pallet, 12px is about 1/4.
+  const REVEAL_PX = 12;
 
-  // If too many pallets, shrink offset so stack stays inside the cell
+  // offset is how much we shift each next pallet down
+  let offset = REVEAL_PX;
+
+  // Keep the entire stack inside the cell when many pallets exist
   if (total > 1) {
     const maxOffset = Math.floor((height - palletHeight) / (total - 1));
-    offset = Math.max(4, Math.min(offset, maxOffset));
+    // don’t let it become invisible
+    offset = Math.max(6, Math.min(offset, maxOffset));
   }
 
   pallet.el.style.left = `${left}px`;
   pallet.el.style.top = `${top + idx * offset}px`;
   pallet.el.style.width = `${width}px`;
   pallet.el.style.height = `${palletHeight}px`;
-
-  // Keep top-most pallet clickable and visible
-  pallet.el.style.zIndex = 10 + idx;
 };
 
 // -------------------------------------------------
@@ -232,6 +234,8 @@ window.updateInventorySummary = function updateInventorySummary() {
   });
 
   const out = document.getElementById('inventory-summary-output');
+  if (!out) return;
+
   out.innerHTML = '';
   for (const key in summary) {
     out.innerHTML += `<b>${key}</b>: ${summary[key]}<br>`;
@@ -243,6 +247,7 @@ window.updateInventorySummary = function updateInventorySummary() {
 // -------------------------------------------------
 window.scaleGrid = function scaleGrid() {
   const container = document.querySelector('#warehouse-container');
+  if (!container) return;
 
   const screenWidth = window.innerWidth;
   const screenHeight = window.innerHeight;
@@ -250,7 +255,6 @@ window.scaleGrid = function scaleGrid() {
   const originalWidth = 1730;
   const originalHeight = 1350;
 
-  // IMPORTANT: update global scale used by dragging math
   window.scale = Math.min(screenWidth / originalWidth, screenHeight / originalHeight, 1);
 
   container.style.transform = `scale(${window.scale})`;
