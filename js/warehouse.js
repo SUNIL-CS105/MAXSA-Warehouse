@@ -1,13 +1,17 @@
+// ===============================
+// warehouse.js (COMPLETE FILE)
+// ===============================
+
 // --- Warehouse App Variables / Constants ---
 window.CELL_WIDTH = 80;
 window.CELL_HEIGHT = 50;
 
 window.pallets = [];
 window.palletsByLocation = {};
-window.scale = 1.0;              // IMPORTANT: used by touch dragging math
+window.scale = 1.0;              // used by dragging math
 window.isDraggingPallet = false;
 
-// Location definitions (same as your original)
+// --- Location definitions (same as original) ---
 window.locations = {
   gridLabels: {
     rows: ['X','W','V','U','T','S','R','Q','P','O','N','M','L','K','J','I','H','G','F','E','D','C','B','A'],
@@ -52,7 +56,9 @@ window.locations = {
   ]
 };
 
-// --- Core Warehouse Functions ---
+// -------------------------------------------------
+// Grid / Locations
+// -------------------------------------------------
 window.createGridLabels = function createGridLabels() {
   const container = document.querySelector('.grid-stack');
   container.innerHTML = '';
@@ -119,17 +125,34 @@ window.createGridLabels = function createGridLabels() {
   });
 };
 
+// (Optional legacy helper)
 window.findLocationUnder = function findLocationUnder(x, y) {
-  const cell = document.elementFromPoint(x, y);
-  if (!cell) return null;
-
-  if (cell.classList.contains("label-cell")) {
-    return cell.dataset.location;
-  }
-  const parent = cell.closest(".label-cell");
-  return parent ? parent.dataset.location : null;
+  const el = document.elementFromPoint(x, y);
+  if (!el) return null;
+  const cell = el.closest(".label-cell");
+  return cell ? cell.dataset.location : null;
 };
 
+// ✅ Most reliable: rectangle hit-test (works even when pallet covers cell)
+window.getLocationAtClientPoint = function (clientX, clientY) {
+  const cells = document.querySelectorAll(".label-cell");
+  for (const cell of cells) {
+    const r = cell.getBoundingClientRect(); // viewport coords (already scaled)
+    if (
+      clientX >= r.left &&
+      clientX <= r.right &&
+      clientY >= r.top &&
+      clientY <= r.bottom
+    ) {
+      return cell.dataset.location || null;
+    }
+  }
+  return null;
+};
+
+// -------------------------------------------------
+// Pallets: create / stack / position
+// -------------------------------------------------
 window.createNewPallet = function createNewPallet(itemId, quantity, location = "New_#", record = true) {
   const id = 'pallet-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
   const pallet = new window.Pallet(id, itemId, quantity, location);
@@ -140,18 +163,28 @@ window.createNewPallet = function createNewPallet(itemId, quantity, location = "
   if (!window.palletsByLocation[location]) window.palletsByLocation[location] = [];
   window.palletsByLocation[location].push(pallet);
 
-  window.positionPalletInLocation(pallet);
+  // ✅ Position all pallets in this location (supports overlap stacking)
   window.adjustPalletSizesAtLocation(location);
 
   if (record) {
     window.recordHistory('new-product', itemId, quantity);
     window.saveWarehouseData();
   }
+
   return pallet;
 };
 
+window.adjustPalletSizesAtLocation = function adjustPalletSizesAtLocation(location) {
+  if (!location) return;
+  const stack = window.palletsByLocation[location];
+  if (!stack) return;
+  stack.forEach(p => window.positionPalletInLocation(p));
+};
+
+// ✅ Overlapping stack: show about 1/4 of each pallet underneath
 window.positionPalletInLocation = function positionPalletInLocation(pallet) {
   const location = pallet.location;
+
   const locEl = Array.from(document.querySelectorAll('.label-cell'))
     .find(el => el.dataset.location === location);
 
@@ -166,22 +199,30 @@ window.positionPalletInLocation = function positionPalletInLocation(pallet) {
   const idx = stack.indexOf(pallet);
   const total = stack.length;
 
-  const palletWidth = width;
-  const palletHeight = total > 0 ? Math.floor(height / total) : height;
+  // readable height (never taller than the cell)
+  const palletHeight = Math.min(40, height);
 
-  pallet.el.style.left = left + 'px';
-  pallet.el.style.top = (top + palletHeight * idx) + 'px';
-  pallet.el.style.width = palletWidth + 'px';
-  pallet.el.style.height = palletHeight + 'px';
+  // show ~1/4 of the pallet below => offset is 25% of pallet height
+  let offset = Math.floor(palletHeight * 0.25);
+
+  // If too many pallets, shrink offset so stack stays inside the cell
+  if (total > 1) {
+    const maxOffset = Math.floor((height - palletHeight) / (total - 1));
+    offset = Math.max(4, Math.min(offset, maxOffset));
+  }
+
+  pallet.el.style.left = `${left}px`;
+  pallet.el.style.top = `${top + idx * offset}px`;
+  pallet.el.style.width = `${width}px`;
+  pallet.el.style.height = `${palletHeight}px`;
+
+  // Keep top-most pallet clickable and visible
+  pallet.el.style.zIndex = 10 + idx;
 };
 
-window.adjustPalletSizesAtLocation = function adjustPalletSizesAtLocation(location) {
-  if (!location) return;
-  const stack = window.palletsByLocation[location];
-  if (!stack) return;
-  stack.forEach(p => window.positionPalletInLocation(p));
-};
-
+// -------------------------------------------------
+// Inventory summary (excluding shipped / to-office)
+// -------------------------------------------------
 window.updateInventorySummary = function updateInventorySummary() {
   const summary = {};
   window.pallets.forEach(p => {
@@ -197,6 +238,9 @@ window.updateInventorySummary = function updateInventorySummary() {
   }
 };
 
+// -------------------------------------------------
+// Scaling / responsiveness
+// -------------------------------------------------
 window.scaleGrid = function scaleGrid() {
   const container = document.querySelector('#warehouse-container');
 
@@ -206,7 +250,7 @@ window.scaleGrid = function scaleGrid() {
   const originalWidth = 1730;
   const originalHeight = 1350;
 
-  // IMPORTANT: update the GLOBAL scale (do not shadow it)
+  // IMPORTANT: update global scale used by dragging math
   window.scale = Math.min(screenWidth / originalWidth, screenHeight / originalHeight, 1);
 
   container.style.transform = `scale(${window.scale})`;
@@ -214,12 +258,14 @@ window.scaleGrid = function scaleGrid() {
   container.style.top = `${(screenHeight - originalHeight * window.scale) / 2}px`;
 };
 
+// -------------------------------------------------
+// App init
+// -------------------------------------------------
 window.initWarehouseApp = function initWarehouseApp() {
   window.createGridLabels();
   window.setupEventListeners();
   window.scaleGrid();
 
-  // periodic backup save (same behavior as original)
   setInterval(() => {
     const user = firebase.auth().currentUser;
     if (user) window.saveWarehouseData();
