@@ -11,7 +11,80 @@ window.palletsByLocation = {};
 window.scale = 1.0;              // used by dragging math
 window.isDraggingPallet = false;
 
-// --- Location definitions (same as original) ---
+// ✅ NEW: Edit mode flag (default OFF)
+window.isEditMode = false;
+
+window.setEditMode = function setEditMode(enabled) {
+  window.isEditMode = !!enabled;
+
+  const btn = document.getElementById("edit-mode-btn");
+  const addBtn = document.getElementById("add-product-btn");
+
+  if (btn) {
+    if (window.isEditMode) {
+      btn.classList.remove("off");
+      btn.textContent = "✏️ Edit Mode: ON";
+      btn.title = "Click to turn OFF edit mode";
+    } else {
+      btn.classList.add("off");
+      btn.textContent = "✏️ Edit Mode: OFF";
+      btn.title = "Click to turn ON edit mode";
+    }
+  }
+
+  // Disable adding products while view-only
+  if (addBtn) addBtn.disabled = !window.isEditMode;
+};
+
+// ✅ NEW: Excel/CSV export (auto download)
+window.exportInventoryCSV = function exportInventoryCSV() {
+  // Build rows: Location, Product ID, Quantity
+  // Export ONLY active pallets (not shipped/to-office since those remove the pallet)
+  const rows = [["Location", "Product ID", "Quantity"]];
+
+  // Keep a stable order (sorted by location then itemId)
+  const entries = window.pallets
+    .filter(p => p.location !== "SHIPPED" && p.location !== "TO-8412-OFFICE")
+    .map(p => ({ location: p.location, itemId: p.itemId, quantity: p.quantity }));
+
+  entries.sort((a, b) => {
+    if (a.location < b.location) return -1;
+    if (a.location > b.location) return 1;
+    if (a.itemId < b.itemId) return -1;
+    if (a.itemId > b.itemId) return 1;
+    return 0;
+  });
+
+  entries.forEach(e => rows.push([e.location, e.itemId, String(e.quantity)]));
+
+  // Convert to CSV (quoted safely)
+  const csv = rows
+    .map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+
+  const now = new Date();
+  const stamp =
+    now.getFullYear() +
+    "-" + String(now.getMonth() + 1).padStart(2, "0") +
+    "-" + String(now.getDate()).padStart(2, "0") +
+    "_" + String(now.getHours()).padStart(2, "0") +
+    String(now.getMinutes()).padStart(2, "0");
+
+  const filename = `MAXSA_Warehouse_Inventory_${stamp}.csv`;
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+// Location definitions (same as your original)
 window.locations = {
   gridLabels: {
     rows: ['X','W','V','U','T','S','R','Q','P','O','N','M','L','K','J','I','H','G','F','E','D','C','B','A'],
@@ -63,7 +136,6 @@ window.createGridLabels = function createGridLabels() {
   const container = document.querySelector('.grid-stack');
   container.innerHTML = '';
 
-  // Main grid
   const rows = window.locations.gridLabels.rows;
   for (let r = 0; r < rows.length; r++) {
     for (let c = 1; c <= window.locations.gridLabels.cols; c++) {
@@ -79,7 +151,6 @@ window.createGridLabels = function createGridLabels() {
     }
   }
 
-  // Offices
   const off = window.locations.offices;
   for (let i = 1; i <= off.count; i++) {
     const col = i % off.cols;
@@ -96,7 +167,6 @@ window.createGridLabels = function createGridLabels() {
     container.appendChild(div);
   }
 
-  // Restrooms / shelves / temp
   window.locations.restroomsShelvesTemp.forEach(item => {
     const div = document.createElement('div');
     div.className = 'label-cell restroom-zone';
@@ -109,7 +179,6 @@ window.createGridLabels = function createGridLabels() {
     container.appendChild(div);
   });
 
-  // Drop zones
   window.locations.dropZones.forEach(zone => {
     const div = document.createElement('div');
     div.className = 'label-cell drop-zone';
@@ -125,17 +194,12 @@ window.createGridLabels = function createGridLabels() {
   });
 };
 
-// ✅ Most reliable: rectangle hit-test (works even when pallet covers cell)
+// ✅ Most reliable hit-test
 window.getLocationAtClientPoint = function (clientX, clientY) {
   const cells = document.querySelectorAll(".label-cell");
   for (const cell of cells) {
-    const r = cell.getBoundingClientRect(); // viewport coords (already scaled)
-    if (
-      clientX >= r.left &&
-      clientX <= r.right &&
-      clientY >= r.top &&
-      clientY <= r.bottom
-    ) {
+    const r = cell.getBoundingClientRect();
+    if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
       return cell.dataset.location || null;
     }
   }
@@ -151,14 +215,11 @@ window.createNewPallet = function createNewPallet(itemId, quantity, location = "
 
   document.querySelector('.grid-stack').appendChild(pallet.el);
 
-  // add to global list
   window.pallets.push(pallet);
 
-  // add to location stack
   if (!window.palletsByLocation[location]) window.palletsByLocation[location] = [];
   window.palletsByLocation[location].push(pallet);
 
-  // position stack
   window.adjustPalletSizesAtLocation(location);
 
   if (record) {
@@ -176,12 +237,10 @@ window.adjustPalletSizesAtLocation = function adjustPalletSizesAtLocation(locati
 
   stack.forEach((p, i) => {
     window.positionPalletInLocation(p);
-    // ensure correct click layer order
     p.el.style.zIndex = 1000 + i;
   });
 };
 
-// ✅ Overlapping stack: leaves a clearly visible strip of the lower pallets
 window.positionPalletInLocation = function positionPalletInLocation(pallet) {
   const location = pallet.location;
 
@@ -199,20 +258,12 @@ window.positionPalletInLocation = function positionPalletInLocation(pallet) {
   const idx = stack.indexOf(pallet);
   const total = stack.length;
 
-  // Make each pallet readable
   const palletHeight = Math.min(45, height);
-
-  // SHOW strip of pallet underneath (this is the key!)
-  // You wanted ~1/4 visible; with a 45px pallet, 12px is about 1/4.
   const REVEAL_PX = 12;
-
-  // offset is how much we shift each next pallet down
   let offset = REVEAL_PX;
 
-  // Keep the entire stack inside the cell when many pallets exist
   if (total > 1) {
     const maxOffset = Math.floor((height - palletHeight) / (total - 1));
-    // don’t let it become invisible
     offset = Math.max(6, Math.min(offset, maxOffset));
   }
 
@@ -223,7 +274,7 @@ window.positionPalletInLocation = function positionPalletInLocation(pallet) {
 };
 
 // -------------------------------------------------
-// Inventory summary (excluding shipped / to-office)
+// Inventory summary
 // -------------------------------------------------
 window.updateInventorySummary = function updateInventorySummary() {
   const summary = {};
@@ -243,7 +294,7 @@ window.updateInventorySummary = function updateInventorySummary() {
 };
 
 // -------------------------------------------------
-// Scaling / responsiveness
+// Scaling
 // -------------------------------------------------
 window.scaleGrid = function scaleGrid() {
   const container = document.querySelector('#warehouse-container');
@@ -269,6 +320,9 @@ window.initWarehouseApp = function initWarehouseApp() {
   window.createGridLabels();
   window.setupEventListeners();
   window.scaleGrid();
+
+  // ✅ default to view-only
+  window.setEditMode(false);
 
   setInterval(() => {
     const user = firebase.auth().currentUser;
