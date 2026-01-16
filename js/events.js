@@ -1,6 +1,11 @@
 window.setupEventListeners = function setupEventListeners() {
   // Add new product
   document.getElementById('add-product-btn').addEventListener('click', () => {
+    if (!window.isEditMode) {
+      alert("Edit Mode is OFF. Turn on Edit Mode to make changes.");
+      return;
+    }
+
     const itemId = document.getElementById('new-item').value.trim();
     const q = parseInt(document.getElementById('new-q').value, 10);
 
@@ -21,6 +26,22 @@ window.setupEventListeners = function setupEventListeners() {
     const output = document.getElementById('inventory-summary-output');
     output.style.display = output.style.display === 'none' ? 'block' : 'none';
   });
+
+  // ✅ NEW: Edit mode toggle
+  const editBtn = document.getElementById("edit-mode-btn");
+  if (editBtn) {
+    editBtn.addEventListener("click", () => {
+      window.setEditMode(!window.isEditMode);
+    });
+  }
+
+  // ✅ NEW: Excel export
+  const excelBtn = document.getElementById("excel-export-btn");
+  if (excelBtn) {
+    excelBtn.addEventListener("click", () => {
+      window.exportInventoryCSV();
+    });
+  }
 
   // History buttons
   document.querySelectorAll('.history-icon-btn').forEach(btn => {
