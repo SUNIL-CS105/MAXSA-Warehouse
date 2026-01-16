@@ -31,6 +31,9 @@ window.Pallet = class Pallet {
   addEventListeners() {
     // ---------- TRUE DRAG ----------
     this.el.addEventListener("pointerdown", (e) => {
+      // ✅ require edit mode for dragging
+      if (!window.isEditMode) return;
+
       if (e.target === this.splitArrow) return;
       e.preventDefault();
 
@@ -53,6 +56,7 @@ window.Pallet = class Pallet {
     });
 
     this.el.addEventListener("pointermove", (e) => {
+      if (!window.isEditMode) return;
       if (!window.isDraggingPallet || !this.el.classList.contains("dragging")) return;
       e.preventDefault();
 
@@ -67,6 +71,7 @@ window.Pallet = class Pallet {
     });
 
     this.el.addEventListener("pointerup", (e) => {
+      if (!window.isEditMode) return;
       if (!this.el.classList.contains("dragging")) return;
       e.preventDefault();
 
@@ -95,6 +100,12 @@ window.Pallet = class Pallet {
     this.splitArrow.addEventListener("click", (e) => {
       e.stopPropagation();
 
+      // ✅ require edit mode for splitting
+      if (!window.isEditMode) {
+        alert("Edit Mode is OFF. Turn on Edit Mode to split pallets.");
+        return;
+      }
+
       const maxSplit = this.quantity - 1;
       if (maxSplit < 1) return alert("Cannot split a quantity of 1.");
 
@@ -108,7 +119,6 @@ window.Pallet = class Pallet {
         this.quantity -= num;
         this.updateText();
 
-        // ✅ createNewPallet already pushes into window.pallets + palletsByLocation
         window.createNewPallet(this.itemId, num, this.location, false);
 
         window.saveWarehouseData();
@@ -121,6 +131,17 @@ window.Pallet = class Pallet {
     const oldLoc = this.location;
     if (!newLoc) return;
 
+    // ✅ Confirmation before removal zones
+    if (newLoc === "SHIPPED" || newLoc === "TO-8412-OFFICE") {
+      const label = (newLoc === "SHIPPED") ? "SHIPPED" : "TO-8412-OFFICE";
+      const ok = confirm(`Are you sure you want to move ${this.itemId} (Q: ${this.quantity}) to ${label}? This will remove it from the map.`);
+      if (!ok) {
+        // snap back
+        window.adjustPalletSizesAtLocation(oldLoc);
+        return;
+      }
+    }
+
     // remove from old stack
     if (window.palletsByLocation[oldLoc]) {
       window.palletsByLocation[oldLoc] =
@@ -130,14 +151,14 @@ window.Pallet = class Pallet {
       }
     }
 
-    // add to new stack (allow multiple!)
+    // add to new stack
     if (!window.palletsByLocation[newLoc]) window.palletsByLocation[newLoc] = [];
     window.palletsByLocation[newLoc].push(this);
 
     this.location = newLoc;
     this.el.dataset.location = newLoc;
 
-    // shipped / to office
+    // shipped / to office -> record + remove
     if (newLoc === "SHIPPED" || newLoc === "TO-8412-OFFICE") {
       window.recordHistory(newLoc, this.itemId, this.quantity);
       this.remove();
@@ -145,7 +166,7 @@ window.Pallet = class Pallet {
       window.updateInventorySummary();
     }
 
-    // ✅ Reposition BOTH stacks so overlap shows
+    // reposition both stacks
     window.adjustPalletSizesAtLocation(oldLoc);
     window.adjustPalletSizesAtLocation(newLoc);
 
