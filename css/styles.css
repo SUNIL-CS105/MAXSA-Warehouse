@@ -283,9 +283,9 @@ h2 { margin-top: 0; }
 #edit-export-panel{
   top: 260px;
   left: 1480px;
-  height: auto
+  height: auto;
   background: #2c3e50;
-  width: 220px;
+  width: 320px;
   padding: 50px;
   text-align: center;
   z-index: 120;
