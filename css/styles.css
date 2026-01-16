@@ -284,9 +284,9 @@ h2 { margin-top: 0; }
   top: 260px;
   left: 1480px;
   background: #2c3e50;
-  width: 220px;
+  width: 180px;
   text-align: center;
-  z-index: 120;
+  z-index: 1000;
 }
 
 .small-btn {
@@ -305,7 +305,7 @@ h2 { margin-top: 0; }
   color: white;
 }
 #edit-mode-btn.off {
-  background: #7f8c8d; /* gray when OFF */
+  background: #85c1e9; /* light blue when OFF */
 }
 #excel-export-btn {
   background: #1f8f3a; /* Excel green */
