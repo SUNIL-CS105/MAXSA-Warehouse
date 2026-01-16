@@ -278,3 +278,45 @@ h2 { margin-top: 0; }
   z-index: 1002;
   display: none;
 }
+
+/* ✅ NEW: Edit mode + Excel controls */
+#edit-export-panel{
+  top: 260px;
+  left: 1480px;
+  background: #2c3e50;
+  width: 220px;
+  text-align: center;
+  z-index: 120;
+}
+
+.small-btn {
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#edit-mode-btn {
+  background: #16a085;
+  color: white;
+}
+#edit-mode-btn.off {
+  background: #7f8c8d; /* gray when OFF */
+}
+#excel-export-btn {
+  background: #1f8f3a; /* Excel green */
+  color: white;
+}
+#excel-export-btn:hover { filter: brightness(1.05); }
+
+/* Optional: visually hint "view-only" */
+.view-only-hint {
+  font-weight: normal;
+  font-size: 12px;
+  margin-top: 8px;
+  opacity: 0.9;
+}
