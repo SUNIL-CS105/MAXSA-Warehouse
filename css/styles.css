@@ -251,16 +251,20 @@ h2 { margin-top: 0; }
   margin-top: 10px;
 }
 #logout-btn {
-  position: fixed;   /* ⬅️ important */
-  top: 20px;            /* ⬅️ above inventory summary */
-  left: 1480px;         /* ⬅️ same horizontal alignment */
+  position: fixed;      /* ✅ keep fixed so it never disappears */
+  top: 20px;
+  right: 20px;          /* ✅ align to the right edge like inventory */
+  left: auto;
+
   padding: 0.5rem 1rem;
   background: #e74c3c;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  z-index: 120;
+
+  display: none;        /* keep this (JS shows it after login) */
+  z-index: 2000;        /* ✅ above panels and map */
 }
 #loading-indicator {
   position: fixed;
