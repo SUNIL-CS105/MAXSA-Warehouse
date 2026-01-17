@@ -251,9 +251,15 @@ h2 { margin-top: 0; }
   margin-top: 10px;
 }
 #logout-btn {
-  position: absolute;
-  top: 20px;
-  right: 20px;   /* ⬅️ same right value */
+  position: absolute;   /* ⬅️ important */
+  top: 20px;            /* ⬅️ above inventory summary */
+  left: 1480px;         /* ⬅️ same horizontal alignment */
+  padding: 0.5rem 1rem;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
   z-index: 120;
 }
 #loading-indicator {
