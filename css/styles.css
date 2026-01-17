@@ -282,11 +282,11 @@ h2 { margin-top: 0; }
 /* ✅ NEW: Edit mode + Excel controls */
 #edit-export-panel{
   top: 260px;
-  left: 1480px;
+  right: 20px
+  left: auto;
   background: #2c3e50;
-  width: 180px;
   text-align: center;
-  z-index: 1000;
+  z-index: 120;
 }
 
 .small-btn {
