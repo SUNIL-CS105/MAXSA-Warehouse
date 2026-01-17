@@ -282,7 +282,7 @@ h2 { margin-top: 0; }
 /* ✅ NEW: Edit mode + Excel controls */
 #edit-export-panel{
   top: 260px;
-  right: 20px
+  right: 5px
   left: auto;
   background: #2c3e50;
   text-align: center;
