@@ -251,7 +251,7 @@ h2 { margin-top: 0; }
   margin-top: 10px;
 }
 #logout-btn {
-  position: absolute;   /* ⬅️ important */
+  position: fixed;   /* ⬅️ important */
   top: 20px;            /* ⬅️ above inventory summary */
   left: 1480px;         /* ⬅️ same horizontal alignment */
   padding: 0.5rem 1rem;
