@@ -210,11 +210,10 @@ window.getLocationAtClientPoint = function (clientX, clientY) {
 // Pallets: create / stack / position
 // -------------------------------------------------
 window.createNewPallet = function createNewPallet(itemId, quantity, location = "New_#", record = true) {
-  const id = 'pallet-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+  const id = "pallet-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
   const pallet = new window.Pallet(id, itemId, quantity, location);
 
-  document.querySelector('.grid-stack').appendChild(pallet.el);
-
+  document.querySelector(".grid-stack").appendChild(pallet.el);
   window.pallets.push(pallet);
 
   if (!window.palletsByLocation[location]) window.palletsByLocation[location] = [];
@@ -222,10 +221,10 @@ window.createNewPallet = function createNewPallet(itemId, quantity, location = "
 
   window.adjustPalletSizesAtLocation(location);
 
-  if (record) {
-    window.recordHistory('new-product', itemId, quantity);
-    window.saveWarehouseData();
-  }
+  // ✅ safe per-pallet write
+  window.upsertPalletToDB(pallet);
+
+  if (record) window.recordHistory("new-product", itemId, quantity);
 
   return pallet;
 };
