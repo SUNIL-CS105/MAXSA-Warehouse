@@ -1,21 +1,52 @@
+// firebaseDB.js (COMPLETE FILE)
+
+// Track when initial load is done (prevents empty/partial writes)
+window.__warehouseLoaded = false;
+
+// Refs
+window.palletsRef = window.database.ref("warehouse/pallets");
+
+// --- Per-pallet writes (SAFE) ---
+window.upsertPalletToDB = function upsertPalletToDB(pallet) {
+  if (!pallet || !pallet.id) return;
+  return window.palletsRef.child(pallet.id).set({
+    itemId: pallet.itemId,
+    quantity: pallet.quantity,
+    location: pallet.location
+  });
+};
+
+window.deletePalletFromDB = function deletePalletFromDB(palletId) {
+  if (!palletId) return;
+  return window.palletsRef.child(palletId).remove();
+};
+
+// Optional: keep this for “export all” / debugging.
+// DO NOT call this on an interval anymore.
 window.saveWarehouseData = function saveWarehouseData() {
-  const data = {};
+  // block saves until initial load finished
+  if (!window.__warehouseLoaded) return;
+
+  const updates = {};
   window.pallets.forEach(p => {
-    data[p.id] = {
+    updates[p.id] = {
       itemId: p.itemId,
       quantity: p.quantity,
       location: p.location
     };
   });
-  window.database.ref('warehouse/pallets').set(data);
+
+  // update() avoids wiping siblings outside our payload,
+  // BUT still shouldn’t be used as frequent autosave.
+  return window.palletsRef.update(updates);
 };
 
+// --- Load (rebuild local state from DB) ---
 window.loadWarehouseData = function loadWarehouseData() {
-  const loading = document.getElementById('loading-indicator');
-  loading.style.display = 'flex';
+  const loading = document.getElementById("loading-indicator");
+  if (loading) loading.style.display = "flex";
 
-  const ref = window.database.ref('warehouse/pallets');
-  ref.on('value', (snapshot) => {
+  window.palletsRef.on("value", (snapshot) => {
     const data = snapshot.val();
 
     // clear old pallets from DOM
@@ -24,16 +55,29 @@ window.loadWarehouseData = function loadWarehouseData() {
     window.palletsByLocation = {};
 
     if (data) {
-      Object.values(data).forEach(palletData => {
-        window.createNewPallet(palletData.itemId, palletData.quantity, palletData.location, false);
+      Object.entries(data).forEach(([id, palletData]) => {
+        // create pallet with same ID from DB (important!)
+        const pallet = new window.Pallet(id, palletData.itemId, palletData.quantity, palletData.location);
+
+        document.querySelector(".grid-stack").appendChild(pallet.el);
+        window.pallets.push(pallet);
+
+        if (!window.palletsByLocation[pallet.location]) window.palletsByLocation[pallet.location] = [];
+        window.palletsByLocation[pallet.location].push(pallet);
       });
+
+      // position all stacks
+      Object.keys(window.palletsByLocation).forEach(loc => window.adjustPalletSizesAtLocation(loc));
     }
 
     window.updateInventorySummary();
-    loading.style.display = 'none';
+
+    window.__warehouseLoaded = true;
+    if (loading) loading.style.display = "none";
   });
 };
 
+// --- History (unchanged) ---
 window.recordHistory = function recordHistory(type, itemId, quantity) {
   const user = firebase.auth().currentUser;
   if (!user) return;
