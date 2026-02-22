@@ -29,11 +29,8 @@ window.Pallet = class Pallet {
   }
 
   addEventListeners() {
-    // ---------- TRUE DRAG ----------
     this.el.addEventListener("pointerdown", (e) => {
-      // ✅ require edit mode for dragging
       if (!window.isEditMode) return;
-
       if (e.target === this.splitArrow) return;
       e.preventDefault();
 
@@ -85,22 +82,12 @@ window.Pallet = class Pallet {
       if (loc) {
         this.moveToLocation(loc);
       } else {
-        // snap back
         window.adjustPalletSizesAtLocation(this.location);
       }
     });
 
-    this.el.addEventListener("pointercancel", () => {
-      this.el.classList.remove("dragging");
-      window.isDraggingPallet = false;
-      window.adjustPalletSizesAtLocation(this.location);
-    });
-
-    // ---------- Split arrow ----------
     this.splitArrow.addEventListener("click", (e) => {
       e.stopPropagation();
-
-      // ✅ require edit mode for splitting
       if (!window.isEditMode) {
         alert("Edit Mode is OFF. Turn on Edit Mode to split pallets.");
         return;
@@ -118,10 +105,9 @@ window.Pallet = class Pallet {
       if (!isNaN(num) && num > 0 && num < this.quantity) {
         this.quantity -= num;
         this.updateText();
+        window.upsertPalletToDB(this); // Save original with reduced quantity
 
         window.createNewPallet(this.itemId, num, this.location, false);
-
-        window.saveWarehouseData();
         window.adjustPalletSizesAtLocation(this.location);
       }
     });
@@ -131,46 +117,37 @@ window.Pallet = class Pallet {
     const oldLoc = this.location;
     if (!newLoc) return;
 
-    // ✅ Confirmation before removal zones
     if (newLoc === "SHIPPED" || newLoc === "TO-8412-OFFICE") {
-      const label = (newLoc === "SHIPPED") ? "SHIPPED" : "TO-8412-OFFICE";
-      const ok = confirm(`Are you sure you want to move ${this.itemId} (Q: ${this.quantity}) to ${label}? This will remove it from the map.`);
+      const ok = confirm(`Move ${this.itemId} to ${newLoc}? This will remove it from the map.`);
       if (!ok) {
-        // snap back
         window.adjustPalletSizesAtLocation(oldLoc);
         return;
       }
     }
 
-    // remove from old stack
     if (window.palletsByLocation[oldLoc]) {
       window.palletsByLocation[oldLoc] =
         window.palletsByLocation[oldLoc].filter(p => p !== this);
-      if (window.palletsByLocation[oldLoc].length === 0) {
-        delete window.palletsByLocation[oldLoc];
-      }
     }
 
-    // add to new stack
     if (!window.palletsByLocation[newLoc]) window.palletsByLocation[newLoc] = [];
     window.palletsByLocation[newLoc].push(this);
 
     this.location = newLoc;
     this.el.dataset.location = newLoc;
 
-    // shipped / to office -> record + remove
     if (newLoc === "SHIPPED" || newLoc === "TO-8412-OFFICE") {
       window.recordHistory(newLoc, this.itemId, this.quantity);
       this.remove();
       window.pallets = window.pallets.filter(p => p !== this);
-      window.updateInventorySummary();
+      window.deletePalletFromDB(this.id);
+    } else {
+      window.upsertPalletToDB(this);
     }
 
-    // reposition both stacks
     window.adjustPalletSizesAtLocation(oldLoc);
     window.adjustPalletSizesAtLocation(newLoc);
-
-    window.saveWarehouseData();
+    window.updateInventorySummary();
   }
 
   remove() {
