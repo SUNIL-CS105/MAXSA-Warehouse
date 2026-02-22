@@ -10,8 +10,6 @@ window.initAuth = function initAuth() {
       signupContainer.style.display = 'none';
       warehouseApp.style.display = 'block';
       logoutBtn.style.display = 'block';
-
-      // Load + init app
       window.loadWarehouseData();
       window.initWarehouseApp();
     } else {
@@ -23,19 +21,14 @@ window.initAuth = function initAuth() {
   });
 };
 
-// --- Initialize App ---
 window.onload = function() {
   document.getElementById('login-btn').addEventListener('click', () => {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
-
-    firebase.auth().signInWithEmailAndPassword(email, password)
-      .catch(error => alert(error.message));
+    firebase.auth().signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
   });
 
-  document.getElementById('logout-btn').addEventListener('click', () => {
-    firebase.auth().signOut();
-  });
+  document.getElementById('logout-btn').addEventListener('click', () => firebase.auth().signOut());
 
   document.getElementById('show-signup').addEventListener('click', () => {
     document.getElementById('login-container').style.display = 'none';
@@ -50,12 +43,9 @@ window.onload = function() {
   document.getElementById('signup-btn').addEventListener('click', () => {
     const email = document.getElementById('signup-email').value;
     const password = document.getElementById('signup-password').value;
-
     firebase.auth().createUserWithEmailAndPassword(email, password)
-      .then(() => {
-        alert("Sign up successful! You are now logged in.");
-      })
-      .catch(error => alert(error.message));
+      .then(() => alert("Sign up successful!"))
+      .catch(err => alert(err.message));
   });
 
   window.initAuth();
