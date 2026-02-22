@@ -29,6 +29,21 @@ h2 { margin-top: 0; }
   box-sizing: border-box;
 }
 
+.coordinate-label {
+  position: absolute;
+  background-color: #2c3e50; /* Dark grey/blue header */
+  color: white;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #000;
+  box-sizing: border-box;
+  font-size: 14px;
+  pointer-events: none; /* Makes them non-interactive so they don't catch drops */
+  z-index: 5;
+}
+
 .office-zone, .restroom-zone, .drop-zone, .history-panel { font-weight: bold; }
 .office-zone { background-color: #FFFFFF; }
 .restroom-zone { background-color: #FFFFFF; }
