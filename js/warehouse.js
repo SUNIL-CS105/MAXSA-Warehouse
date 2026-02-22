@@ -1,4 +1,7 @@
-// warehouse.js
+// ===============================
+// warehouse.js (FINAL VERSION)
+// ===============================
+
 window.CELL_WIDTH = 80;
 window.CELL_HEIGHT = 50;
 
@@ -12,7 +15,6 @@ window.setEditMode = function setEditMode(enabled) {
   window.isEditMode = !!enabled;
   const btn = document.getElementById("edit-mode-btn");
   const addBtn = document.getElementById("add-product-btn");
-
   if (btn) {
     btn.textContent = window.isEditMode ? "✏️ Edit Mode: ON" : "✏️ Edit Mode: OFF";
     btn.classList.toggle("off", !window.isEditMode);
@@ -25,10 +27,8 @@ window.exportInventoryCSV = function exportInventoryCSV() {
   const entries = window.pallets
     .filter(p => p.location !== "SHIPPED" && p.location !== "TO-8412-OFFICE")
     .map(p => ({ location: p.location, itemId: p.itemId, quantity: p.quantity }));
-
   entries.sort((a, b) => a.location.localeCompare(b.location) || a.itemId.localeCompare(b.itemId));
   entries.forEach(e => rows.push([e.location, e.itemId, String(e.quantity)]));
-
   const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -62,43 +62,97 @@ window.locations = {
   ]
 };
 
-window.createGridLabels = function() {
+window.createGridLabels = function createGridLabels() {
   const container = document.querySelector('.grid-stack');
   container.innerHTML = '';
   const rows = window.locations.gridLabels.rows;
+  const cols = window.locations.gridLabels.cols;
+  const W = window.CELL_WIDTH;
+  const H = window.CELL_HEIGHT;
+
+  // --- MAIN GRID COORDINATES (1-11 TOP/BOTTOM, X-A LEFT) ---
+  for (let c = 1; c <= cols; c++) {
+    const topNum = document.createElement('div');
+    topNum.className = 'coordinate-label';
+    topNum.style.left = `${c * W}px`; topNum.style.top = `-${H}px`;
+    topNum.style.width = `${W}px`; topNum.style.height = `${H}px`;
+    topNum.innerText = c; container.appendChild(topNum);
+
+    const botNum = document.createElement('div');
+    botNum.className = 'coordinate-label';
+    botNum.style.left = `${c * W}px`; botNum.style.top = `${rows.length * H}px`;
+    botNum.style.width = `${W}px`; botNum.style.height = `${H}px`;
+    botNum.innerText = c; container.appendChild(botNum);
+  }
   for (let r = 0; r < rows.length; r++) {
-    for (let c = 1; c <= 11; c++) {
+    const leftLet = document.createElement('div');
+    leftLet.className = 'coordinate-label';
+    leftLet.style.left = `0px`; leftLet.style.top = `${r * H}px`;
+    leftLet.style.width = `${W}px`; leftLet.style.height = `${H}px`;
+    leftLet.innerText = rows[r]; container.appendChild(leftLet);
+  }
+
+  // --- MAIN GRID CELLS ---
+  for (let r = 0; r < rows.length; r++) {
+    for (let c = 1; c <= cols; c++) {
       const div = document.createElement('div');
       div.className = 'label-cell';
-      div.style.left = `${c * 80}px`; div.style.top = `${r * 50}px`;
-      div.style.width = `80px`; div.style.height = `50px`;
+      div.style.left = `${c * W}px`; div.style.top = `${r * H}px`;
+      div.style.width = `${W}px`; div.style.height = `${H}px`;
       div.innerText = `${rows[r]}${c}`; div.dataset.location = `${rows[r]}${c}`;
       container.appendChild(div);
     }
   }
 
+  // --- TEMPORARY ZONE COORDINATES (Tem Header, 1-7 Left, 8-14 Right) ---
+  const temHeader = document.createElement('div');
+  temHeader.className = 'coordinate-label';
+  temHeader.style.left = `980px`; temHeader.style.top = `800px`;
+  temHeader.style.width = `${W * 2 + 10}px`; temHeader.style.height = `${H - 10}px`;
+  temHeader.innerText = "Tem"; container.appendChild(temHeader);
+
+  for (let i = 0; i < 7; i++) {
+    const leftNum = document.createElement('div');
+    leftNum.className = 'coordinate-label';
+    leftNum.style.left = `950px`; leftNum.style.top = `${850 + (i * 50)}px`;
+    leftNum.style.width = `25px`; leftNum.style.height = `40px`;
+    leftNum.innerText = i + 1; container.appendChild(leftNum);
+
+    const rightNum = document.createElement('div');
+    rightNum.className = 'coordinate-label';
+    rightNum.style.left = `${1155px}`; rightNum.style.top = `${850 + (i * 50)}px`;
+    rightNum.style.width = `25px`; rightNum.style.height = `40px`;
+    rightNum.innerText = i + 8; container.appendChild(rightNum);
+  }
+
+  // --- OFFICE AREA COORDINATES (1-6 Top) ---
   const off = window.locations.offices;
+  for (let c = 0; c < off.cols; c++) {
+    const div = document.createElement('div');
+    div.className = 'coordinate-label';
+    div.style.left = `${off.startLeft + c * off.cellWidth}px`; div.style.top = `-30px`;
+    div.style.width = `${off.cellWidth}px`; div.style.height = `25px`;
+    div.innerText = c + 1; container.appendChild(div);
+  }
+
+  // --- RENDER ALL STORAGE CELLS ---
   for (let i = 1; i <= off.count; i++) {
-    const col = (i - 1) % off.cols;
-    const row = Math.floor((i - 1) / off.cols);
+    const col = (i - 1) % off.cols; const row = Math.floor((i - 1) / off.cols);
     const div = document.createElement('div');
     div.className = 'label-cell office-zone';
-    div.style.left = `${off.startLeft + col * off.cellWidth}px`;
-    div.style.top = `${off.startTop + row * off.cellHeight}px`;
+    div.style.left = `${off.startLeft + col * off.cellWidth}px`; div.style.top = `${off.startTop + row * off.cellHeight}px`;
     div.style.width = `${off.cellWidth}px`; div.style.height = `${off.cellHeight}px`;
     div.innerText = `Office${i}`; div.dataset.location = `Office${i}`;
     container.appendChild(div);
   }
-
   window.locations.restroomsShelvesTemp.forEach(item => {
     const div = document.createElement('div');
     div.className = 'label-cell restroom-zone';
     div.style.left = `${item.left}px`; div.style.top = `${item.top}px`;
-    div.style.width = `80px`; div.style.height = `50px`;
+    div.style.width = `${item.width || W}px`; div.style.height = `${item.height || H}px`;
     div.innerText = item.name; div.dataset.location = item.name;
     container.appendChild(div);
   });
-
   window.locations.dropZones.forEach(zone => {
     const div = document.createElement('div');
     div.className = 'label-cell drop-zone';
@@ -137,25 +191,17 @@ window.adjustPalletSizesAtLocation = function(location) {
   stack.forEach((p, i) => {
     const locEl = Array.from(document.querySelectorAll('.label-cell')).find(el => el.dataset.location === location);
     if (locEl) {
-      p.el.style.left = locEl.style.left;
-      p.el.style.top = `${parseInt(locEl.style.top) + (i * 12)}px`;
-      p.el.style.width = locEl.style.width; p.el.style.height = `45px`;
-      p.el.style.zIndex = 1000 + i;
+      p.el.style.left = locEl.style.left; p.el.style.top = `${parseInt(locEl.style.top) + (i * 12)}px`;
+      p.el.style.width = locEl.style.width; p.el.style.height = `45px`; p.el.style.zIndex = 1000 + i;
     }
   });
 };
 
 window.updateInventorySummary = function() {
   const summary = {};
-  window.pallets.forEach(p => {
-    if (p.location !== 'SHIPPED' && p.location !== 'TO-8412-OFFICE') {
-      summary[p.itemId] = (summary[p.itemId] || 0) + p.quantity;
-    }
-  });
+  window.pallets.forEach(p => { if (p.location !== 'SHIPPED' && p.location !== 'TO-8412-OFFICE') summary[p.itemId] = (summary[p.itemId] || 0) + p.quantity; });
   const out = document.getElementById('inventory-summary-output');
-  if (out) {
-    out.innerHTML = Object.entries(summary).map(([id, q]) => `<b>${id}</b>: ${q}<br>`).join('');
-  }
+  if (out) out.innerHTML = Object.entries(summary).map(([id, q]) => `<b>${id}</b>: ${q}<br>`).join('');
 };
 
 window.scaleGrid = function() {
