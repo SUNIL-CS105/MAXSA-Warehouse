@@ -109,7 +109,7 @@ h2 { margin-top: 0; }
   transform-origin: top left;
 }
 
-#add-product-panel { top: 600px; left: 1100px; background: #27ae60; z-index: 100; }
+#add-product-panel { top: 700px; left: 1100px; background: #27ae60; z-index: 100; }
 #add-product-panel input {
   width: calc(100% - 12px);
   margin-bottom: 6px;
