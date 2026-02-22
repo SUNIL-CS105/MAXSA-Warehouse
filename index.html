@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MAXSA Warehouse Map</title>
 
-  <!-- Firebase CDN (v8 – REQUIRED) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -14,7 +13,6 @@
 </head>
 <body>
 
-  <!-- LOGIN -->
   <div id="login-container">
     <div class="login-box">
       <h2>Warehouse Login</h2>
@@ -25,7 +23,6 @@
     </div>
   </div>
 
-  <!-- SIGNUP -->
   <div id="signup-container" style="display:none;">
     <div class="login-box">
       <h2>Warehouse Sign Up</h2>
@@ -39,7 +36,6 @@
   <div id="loading-indicator">Loading warehouse data...</div>
   <button id="logout-btn">Logout</button>
 
-  <!-- APP -->
   <div id="warehouse-app" style="display:none;">
     <h2>MAXSA Warehouse Map</h2>
 
@@ -58,7 +54,6 @@
         <div id="inventory-summary-output" style="display:none;"></div>
       </div>
 
-      <!-- ✅ NEW PANEL: Edit Mode + Excel -->
       <div id="edit-export-panel" class="control-panel">
         Controls
         <button id="edit-mode-btn" class="small-btn off" title="Toggle edit mode on/off">
@@ -79,7 +74,6 @@
       </div>
     </div>
 
-    <!-- MODAL -->
     <div id="history-modal" class="modal">
       <div class="modal-content">
         <span class="close-btn">&times;</span>
@@ -89,7 +83,6 @@
     </div>
   </div>
 
-  <!-- SCRIPT ORDER IS CRITICAL -->
   <script src="js/config/firebase.js"></script>
   <script src="js/firebaseDB.js"></script>
   <script src="js/pallet.js"></script>
@@ -99,4 +92,3 @@
 
 </body>
 </html>
-
