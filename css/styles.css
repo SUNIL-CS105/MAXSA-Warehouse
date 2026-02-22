@@ -29,9 +29,10 @@ h2 { margin-top: 0; }
   box-sizing: border-box;
 }
 
+/* NEW: Coordinate headers for rows and columns */
 .coordinate-label {
   position: absolute;
-  background-color: #2c3e50; /* Dark grey/blue header */
+  background-color: #2c3e50; /* Dark grey header */
   color: white;
   font-weight: bold;
   display: flex;
@@ -40,7 +41,7 @@ h2 { margin-top: 0; }
   border: 1px solid #000;
   box-sizing: border-box;
   font-size: 14px;
-  pointer-events: none; /* Makes them non-interactive so they don't catch drops */
+  pointer-events: none; /* Allows dragging pallets OVER them without interference */
   z-index: 5;
 }
 
@@ -221,7 +222,6 @@ h2 { margin-top: 0; }
   font-size: 14px;
 }
 
-/* Login styles */
 #login-container, #signup-container {
   position: fixed;
   top: 0;
@@ -316,22 +316,7 @@ h2 { margin-top: 0; }
   cursor: pointer;
 }
 
-#edit-mode-btn {
-  background: #16a085;
-  color: white;
-}
-#edit-mode-btn.off {
-  background: #85c1e9;
-}
-#excel-export-btn {
-  background: #1f8f3a;
-  color: white;
-}
+#edit-mode-btn { background: #16a085; color: white; }
+#edit-mode-btn.off { background: #85c1e9; }
+#excel-export-btn { background: #1f8f3a; color: white; }
 #excel-export-btn:hover { filter: brightness(1.05); }
-
-.view-only-hint {
-  font-weight: normal;
-  font-size: 12px;
-  margin-top: 8px;
-  opacity: 0.9;
-}
