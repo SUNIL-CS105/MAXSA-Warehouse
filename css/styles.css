@@ -108,8 +108,8 @@ body {
 ========================= */
 #warehouse-container {
   position: absolute;
-  width: 1798px;
-  height: 1488px;
+  width: 1830px;
+  height: 1510px;
   transform-origin: top left;
 }
 
@@ -267,7 +267,7 @@ body {
 
 #add-product-panel {
   top: 650px;
-  left: 1360px;
+  left: 1500px;
   background: #27ae60;
   z-index: 120;
 }
@@ -322,8 +322,8 @@ body {
 ========================= */
 #undo-btn {
   position: absolute;
-  right: 14px;
-  bottom: 16px;
+  right: 28px;
+  bottom: 28px;
   background: #8e44ad;
   color: white;
   border: none;
