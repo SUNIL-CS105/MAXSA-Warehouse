@@ -10,7 +10,7 @@ window.pallets = [];
 window.palletsByLocation = {};
 window.scale = 1.0;
 window.isDraggingPallet = false;
-window.editMode = false;
+window.editMode = true;
 window.warehouseAppInitialized = false;
 window.undoStack = [];
 window.isUndoing = false;
@@ -412,17 +412,17 @@ window.scaleGrid = function scaleGrid() {
 
   if (!container || !stage) return;
 
-  const availableWidth = stage.clientWidth - 12;
-  const availableHeight = stage.clientHeight - 12;
+  const availableWidth = stage.clientWidth - 20;
+  const availableHeight = stage.clientHeight - 20;
 
-  const originalWidth = 1798;
-  const originalHeight = 1488;
+  const originalWidth = 1830;
+  const originalHeight = 1510;
 
   window.scale = Math.min(availableWidth / originalWidth, availableHeight / originalHeight, 1);
 
   container.style.transform = `scale(${window.scale})`;
-  container.style.left = `${Math.max((availableWidth - originalWidth * window.scale) / 2, 4)}px`;
-  container.style.top = `${Math.max((availableHeight - originalHeight * window.scale) / 2, 4)}px`;
+  container.style.left = `${Math.max((availableWidth - originalWidth * window.scale) / 2, 10)}px`;
+  container.style.top = `${Math.max((availableHeight - originalHeight * window.scale) / 2, 10)}px`;
 };
 
 window.initWarehouseApp = function initWarehouseApp() {
