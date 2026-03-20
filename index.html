@@ -1,86 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MAXSA Warehouse Map Pro</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MAXSA Warehouse Map</title>
+
+  <!-- Firebase CDN (v8) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
-    <div id="login-container">
-        <div class="login-box">
-            <h2>MAXSA Login</h2>
-            <input type="email" id="login-email" placeholder="Email">
-            <input type="password" id="login-password" placeholder="Password">
-            <button id="login-btn">Login</button>
-            <a id="show-signup">New User? Sign Up</a>
-        </div>
+  <!-- LOGIN -->
+  <div id="login-container">
+    <div class="login-box">
+      <h2>Warehouse Login</h2>
+      <input type="email" id="login-email" placeholder="Email">
+      <input type="password" id="login-password" placeholder="Password">
+      <button id="login-btn">Login</button>
+      <a id="show-signup">New User? Sign Up</a>
+    </div>
+  </div>
+
+  <!-- SIGNUP -->
+  <div id="signup-container" style="display:none;">
+    <div class="login-box">
+      <h2>Warehouse Sign Up</h2>
+      <input type="email" id="signup-email" placeholder="Email">
+      <input type="password" id="signup-password" placeholder="Password">
+      <button id="signup-btn">Sign Up</button>
+      <a id="show-login">Already have an account? Login</a>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading-indicator">Loading warehouse data...</div>
+
+  <!-- APP HEADER -->
+  <div id="app-header" class="app-header" style="display:none;">
+    <div class="app-header-left">
+      <div class="app-title">MAXSA</div>
     </div>
 
-    <div id="signup-container" style="display:none;">
-        <div class="login-box">
-            <h2>MAXSA Sign Up</h2>
-            <input type="email" id="signup-email" placeholder="Email">
-            <input type="password" id="signup-password" placeholder="Password">
-            <button id="signup-btn">Sign Up</button>
-            <a id="show-login">Already have an account? Login</a>
+    <div class="app-header-right">
+      <button id="edit-mode-btn" class="header-btn">Edit: ON</button>
+      <button id="excel-export-btn" class="header-btn">Download Excel</button>
+      <button id="inventory-summary-btn" class="header-btn">Inventory Summary</button>
+      <button id="history-btn" class="header-btn">History</button>
+      <button id="logout-btn" class="header-btn">Logout</button>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="warehouse-app" style="display:none;">
+    <div id="app-stage">
+      <div id="warehouse-container">
+        <div class="grid-stack"></div>
+
+        <div id="add-product-panel" class="control-panel">
+          <div style="margin-bottom: 8px;">Add Product</div>
+          <input type="text" id="new-item" placeholder="Item #" />
+          <input type="number" id="new-q" placeholder="Quantity" min="1" />
+          <button id="add-product-btn">➕ Add New Product</button>
+          <div class="view-only-hint">Turn Edit OFF to prevent moving/splitting/adding.</div>
         </div>
+      </div>
     </div>
 
-    <div id="warehouse-app" style="display:none;">
-        <header id="top-header">
-            <div class="header-left">
-                <h1 class="brand">MAXSA</h1>
-                <button id="edit-mode-btn" class="header-btn">Edit: OFF</button>
-                <button id="excel-export-btn" class="header-btn">📊 Excel</button>
-            </div>
-
-            <div class="header-center">
-                <div class="add-product-inline">
-                    <input type="text" id="new-item" placeholder="Item #">
-                    <input type="number" id="new-q" placeholder="Qty">
-                    <button id="add-product-btn">➕ Add</button>
-                </div>
-                <button id="summary-trigger-btn" class="header-btn">📋 Summary</button>
-            </div>
-
-            <div class="header-right">
-                <div class="history-inline">
-                    <span class="label">History:</span>
-                    <div class="history-icon-btn new-product" data-type="new-product" title="New Products">📦</div>
-                    <div class="history-icon-btn shipped" data-type="shipped" title="Shipped">🚚</div>
-                    <div class="history-icon-btn office" data-type="to-office" title="To Office">🏢</div>
-                </div>
-                <button id="logout-btn">Logout</button>
-            </div>
-        </header>
-
-        <div id="warehouse-container">
-            <div class="grid-stack"></div>
-        </div>
-
-        <div id="inventory-summary-output" style="display:none;"></div>
-    </div>
-
-    <div id="loading-indicator" style="display:none;">Loading...</div>
-
+    <!-- HISTORY MODAL -->
     <div id="history-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h3 id="history-modal-title">History Log</h3>
-            <div id="history-output"></div>
-        </div>
+      <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3 id="history-modal-title">Warehouse Movement History</h3>
+        <div id="history-output"></div>
+      </div>
     </div>
 
-    <script src="js/config/firebase.js"></script>
-    <script src="js/firebaseDB.js"></script>
-    <script src="js/pallet.js"></script>
-    <script src="js/warehouse.js"></script>
-    <script src="js/events.js"></script>
-    <script src="js/auth.js"></script>
+    <!-- INVENTORY SUMMARY MODAL -->
+    <div id="inventory-summary-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3>Inventory Summary</h3>
+        <div id="inventory-summary-modal-output"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT ORDER -->
+  <script src="js/config/firebase.js"></script>
+  <script src="js/firebaseDB.js"></script>
+  <script src="js/pallet.js"></script>
+  <script src="js/warehouse.js"></script>
+  <script src="js/events.js"></script>
+  <script src="js/auth.js"></script>
+
 </body>
 </html>
