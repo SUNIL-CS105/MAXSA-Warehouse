@@ -26,12 +26,24 @@ window.Pallet = class Pallet {
   updateText() {
     this.el.innerHTML = `${this.itemId}<br>Q: ${this.quantity}`;
     this.el.appendChild(this.splitArrow);
+    this.el.dataset.quantity = this.quantity;
+    this.el.dataset.location = this.location;
+
+    if (!window.editMode) {
+      this.el.classList.add("view-only");
+      this.splitArrow.classList.add("disabled");
+    } else {
+      this.el.classList.remove("view-only");
+      this.splitArrow.classList.remove("disabled");
+    }
   }
 
   addEventListeners() {
+    // TRUE DRAG
     this.el.addEventListener("pointerdown", (e) => {
-      if (!window.isEditMode) return;
+      if (!window.editMode) return;
       if (e.target === this.splitArrow) return;
+
       e.preventDefault();
 
       const container = document.querySelector(".grid-stack");
@@ -53,8 +65,9 @@ window.Pallet = class Pallet {
     });
 
     this.el.addEventListener("pointermove", (e) => {
-      if (!window.isEditMode) return;
+      if (!window.editMode) return;
       if (!window.isDraggingPallet || !this.el.classList.contains("dragging")) return;
+
       e.preventDefault();
 
       const container = document.querySelector(".grid-stack");
@@ -68,11 +81,14 @@ window.Pallet = class Pallet {
     });
 
     this.el.addEventListener("pointerup", (e) => {
-      if (!window.isEditMode) return;
+      if (!window.editMode) return;
       if (!this.el.classList.contains("dragging")) return;
+
       e.preventDefault();
 
-      try { this.el.releasePointerCapture(e.pointerId); } catch (_) {}
+      try {
+        this.el.releasePointerCapture(e.pointerId);
+      } catch (_) {}
 
       this.el.classList.remove("dragging");
       window.isDraggingPallet = false;
@@ -86,15 +102,26 @@ window.Pallet = class Pallet {
       }
     });
 
+    this.el.addEventListener("pointercancel", () => {
+      this.el.classList.remove("dragging");
+      window.isDraggingPallet = false;
+      window.adjustPalletSizesAtLocation(this.location);
+    });
+
+    // Split arrow
     this.splitArrow.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (!window.isEditMode) {
-        alert("Edit Mode is OFF. Turn on Edit Mode to split pallets.");
+
+      if (!window.editMode) {
+        alert("Edit mode is OFF. Turn it ON to split pallets.");
         return;
       }
 
       const maxSplit = this.quantity - 1;
-      if (maxSplit < 1) return alert("Cannot split a quantity of 1.");
+      if (maxSplit < 1) {
+        alert("Cannot split a quantity of 1.");
+        return;
+      }
 
       const splitQ = prompt(
         `Enter quantity to split from "${this.itemId}" (max ${maxSplit}):`,
@@ -102,55 +129,93 @@ window.Pallet = class Pallet {
       );
 
       const num = parseInt(splitQ, 10);
+
       if (!isNaN(num) && num > 0 && num < this.quantity) {
         this.quantity -= num;
         this.updateText();
-        window.upsertPalletToDB(this); // Save original with reduced quantity
 
         window.createNewPallet(this.itemId, num, this.location, false);
+
+        window.recordHistory({
+          action: 'split',
+          itemId: this.itemId,
+          quantity: num,
+          fromLocation: this.location,
+          toLocation: this.location
+        });
+
+        window.saveWarehouseData();
         window.adjustPalletSizesAtLocation(this.location);
+        window.updateInventorySummary();
       }
     });
   }
 
   moveToLocation(newLoc) {
     const oldLoc = this.location;
-    if (!newLoc) return;
-
-    if (newLoc === "SHIPPED" || newLoc === "TO-8412-OFFICE") {
-      const ok = confirm(`Move ${this.itemId} to ${newLoc}? This will remove it from the map.`);
-      if (!ok) {
-        window.adjustPalletSizesAtLocation(oldLoc);
-        return;
-      }
+    if (!newLoc || newLoc === oldLoc) {
+      window.adjustPalletSizesAtLocation(this.location);
+      return;
     }
 
+    // remove from old stack
     if (window.palletsByLocation[oldLoc]) {
       window.palletsByLocation[oldLoc] =
         window.palletsByLocation[oldLoc].filter(p => p !== this);
+
+      if (window.palletsByLocation[oldLoc].length === 0) {
+        delete window.palletsByLocation[oldLoc];
+      }
     }
 
+    // shipped / to office = record then remove
+    if (newLoc === "SHIPPED" || newLoc === "TO-8412-OFFICE") {
+      window.recordHistory({
+        action: 'move',
+        itemId: this.itemId,
+        quantity: this.quantity,
+        fromLocation: oldLoc,
+        toLocation: newLoc
+      });
+
+      this.location = newLoc;
+      this.el.dataset.location = newLoc;
+
+      this.remove();
+      window.pallets = window.pallets.filter(p => p !== this);
+
+      window.adjustPalletSizesAtLocation(oldLoc);
+      window.saveWarehouseData();
+      window.updateInventorySummary();
+      return;
+    }
+
+    // add to new stack
     if (!window.palletsByLocation[newLoc]) window.palletsByLocation[newLoc] = [];
     window.palletsByLocation[newLoc].push(this);
 
     this.location = newLoc;
     this.el.dataset.location = newLoc;
 
-    if (newLoc === "SHIPPED" || newLoc === "TO-8412-OFFICE") {
-      window.recordHistory(newLoc, this.itemId, this.quantity);
-      this.remove();
-      window.pallets = window.pallets.filter(p => p !== this);
-      window.deletePalletFromDB(this.id);
-    } else {
-      window.upsertPalletToDB(this);
-    }
+    window.recordHistory({
+      action: 'move',
+      itemId: this.itemId,
+      quantity: this.quantity,
+      fromLocation: oldLoc,
+      toLocation: newLoc
+    });
 
     window.adjustPalletSizesAtLocation(oldLoc);
     window.adjustPalletSizesAtLocation(newLoc);
+
+    window.saveWarehouseData();
     window.updateInventorySummary();
+    this.updateText();
   }
 
   remove() {
-    if (this.el && this.el.parentNode) this.el.parentNode.removeChild(this.el);
+    if (this.el && this.el.parentNode) {
+      this.el.parentNode.removeChild(this.el);
+    }
   }
 };
