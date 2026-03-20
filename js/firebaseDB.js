@@ -133,7 +133,7 @@ window.showHistory = function showHistory() {
               <th>Initial Location</th>
               <th>Final Location</th>
               <th>Quantity</th>
-              <th>Time</th>
+              <th>Date / Time</th>
             </tr>
           </thead>
           <tbody>
