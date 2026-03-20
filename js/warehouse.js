@@ -293,6 +293,23 @@ window.positionPalletInLocation = function positionPalletInLocation(pallet) {
 };
 
 window.getInventorySummaryData = function getInventorySummaryData() {
+  const totals = {};
+
+  window.pallets
+    .filter(p => p.location !== 'SHIPPED' && p.location !== 'TO-8412-OFFICE')
+    .forEach(p => {
+      totals[p.itemId] = (totals[p.itemId] || 0) + p.quantity;
+    });
+
+  return Object.keys(totals)
+    .sort((a, b) => a.localeCompare(b))
+    .map(itemId => ({
+      itemId,
+      quantity: totals[itemId]
+    }));
+};
+
+window.getInventoryExportData = function getInventoryExportData() {
   return window.pallets
     .filter(p => p.location !== 'SHIPPED' && p.location !== 'TO-8412-OFFICE')
     .map(p => ({
@@ -322,8 +339,7 @@ window.updateInventorySummary = function updateInventorySummary() {
       <thead>
         <tr>
           <th>Product ID</th>
-          <th>Location</th>
-          <th>Quantity</th>
+          <th>Total Quantity</th>
         </tr>
       </thead>
       <tbody>
@@ -333,7 +349,6 @@ window.updateInventorySummary = function updateInventorySummary() {
     html += `
       <tr>
         <td>${row.itemId}</td>
-        <td>${row.location}</td>
         <td>${row.quantity}</td>
       </tr>
     `;
@@ -354,21 +369,44 @@ window.showInventorySummaryModal = function showInventorySummaryModal() {
 };
 
 window.downloadInventoryExcel = function downloadInventoryExcel() {
-  const rows = window.getInventorySummaryData();
+  const rows = window.getInventoryExportData();
 
   if (!rows.length) {
     alert('No inventory data to export.');
     return;
   }
 
+  const leftRows = [];
+  const rightRows = [];
+
+  rows.forEach((row, index) => {
+    if (index % 2 === 0) {
+      leftRows.push(row);
+    } else {
+      rightRows.push(row);
+    }
+  });
+
+  const maxLen = Math.max(leftRows.length, rightRows.length);
+
   const csvRows = [
-    ['Product Details', '', 'Inventory Details'],
-    ['Product ID', 'Location', 'Quantity']
+    ['Product ID', 'Location', 'Quantity', '|', 'Product ID', 'Location', 'Quantity']
   ];
 
-  rows.forEach(row => {
-    csvRows.push([row.itemId, row.location, row.quantity]);
-  });
+  for (let i = 0; i < maxLen; i++) {
+    const left = leftRows[i] || { itemId: '', location: '', quantity: '' };
+    const right = rightRows[i] || { itemId: '', location: '', quantity: '' };
+
+    csvRows.push([
+      left.itemId,
+      left.location,
+      left.quantity,
+      '|',
+      right.itemId,
+      right.location,
+      right.quantity
+    ]);
+  }
 
   const csvContent = csvRows
     .map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(','))
