@@ -9,7 +9,7 @@ window.firebaseConfig = {
   appId: "1:978214247804:web:aa785914ee177d74ba98f9"
 };
 
-// Initialize Firebase (only once)
+// Initialize Firebase only once
 if (!firebase.apps.length) {
   firebase.initializeApp(window.firebaseConfig);
 }
