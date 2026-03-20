@@ -20,7 +20,7 @@
       <h2>Warehouse Login</h2>
       <input type="email" id="login-email" placeholder="Email">
       <input type="password" id="login-password" placeholder="Password">
-      <button id="login-btn">Login</button>
+      <button type="button" id="login-btn">Login</button>
       <a id="show-signup">New User? Sign Up</a>
     </div>
   </div>
@@ -31,7 +31,7 @@
       <h2>Warehouse Sign Up</h2>
       <input type="email" id="signup-email" placeholder="Email">
       <input type="password" id="signup-password" placeholder="Password">
-      <button id="signup-btn">Sign Up</button>
+      <button type="button" id="signup-btn">Sign Up</button>
       <a id="show-login">Already have an account? Login</a>
     </div>
   </div>
@@ -46,11 +46,11 @@
     </div>
 
     <div class="app-header-right">
-      <button id="edit-mode-btn" class="header-btn">Edit: ON</button>
-      <button id="excel-export-btn" class="header-btn">Download Excel</button>
-      <button id="inventory-summary-btn" class="header-btn">Inventory Summary</button>
-      <button id="history-btn" class="header-btn">History</button>
-      <button id="logout-btn" class="header-btn">Logout</button>
+      <button type="button" id="edit-mode-btn" class="header-btn">Edit: ON</button>
+      <button type="button" id="excel-export-btn" class="header-btn">Download Excel</button>
+      <button type="button" id="inventory-summary-btn" class="header-btn">Inventory Summary</button>
+      <button type="button" id="history-btn" class="header-btn">History</button>
+      <button type="button" id="logout-btn" class="header-btn">Logout</button>
     </div>
   </div>
 
@@ -64,7 +64,7 @@
           <div style="margin-bottom: 8px;">Add Product</div>
           <input type="text" id="new-item" placeholder="Item #" />
           <input type="number" id="new-q" placeholder="Quantity" min="1" />
-          <button id="add-product-btn">➕ Add New Product</button>
+          <button type="button" id="add-product-btn">➕ Add New Product</button>
           <div class="view-only-hint">Turn Edit OFF to prevent moving/splitting/adding.</div>
         </div>
       </div>
@@ -90,12 +90,12 @@
   </div>
 
   <!-- SCRIPT ORDER -->
-<script src="js/config/firebase.js"></script>
-<script src="js/firebaseDB.js"></script>
-<script src="js/pallet.js"></script>
-<script src="js/warehouse.js"></script>
-<script src="js/events.js"></script>
-<script src="js/auth.js"></script>
+  <script src="js/config/firebase.js"></script>
+  <script src="js/firebaseDB.js"></script>
+  <script src="js/pallet.js"></script>
+  <script src="js/warehouse.js"></script>
+  <script src="js/events.js"></script>
+  <script src="js/auth.js"></script>
 
 </body>
 </html>
