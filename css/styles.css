@@ -5,28 +5,39 @@ body {
   overflow: hidden;
 }
 
-h2 {
-  margin-top: 0;
+#warehouse-app {
+  display: none;
+  width: 100%;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+#app-stage {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: auto;
 }
 
 /* =========================
-   APP HEADER
+   MAP HEADER (attached to map)
 ========================= */
-.app-header {
-  position: fixed;
+.map-header {
+  position: absolute;
+  left: 60px;
   top: 0;
-  left: 0;
-  right: 0;
-  height: 64px;
+  width: 1730px;
+  height: 72px;
   background: #1f2d3d;
   color: white;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
+  padding: 0 16px;
   box-sizing: border-box;
-  z-index: 2000;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  z-index: 1500;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
 .app-header-left {
@@ -45,6 +56,7 @@ h2 {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: nowrap;
 }
 
 .header-btn {
@@ -70,6 +82,7 @@ h2 {
 #edit-mode-btn {
   background: #16a085;
 }
+
 #edit-mode-btn.off {
   background: #7f8c8d;
 }
@@ -91,37 +104,19 @@ h2 {
 }
 
 /* =========================
-   MAIN APP AREA
-========================= */
-#warehouse-app {
-  display: none;
-  width: 100%;
-  height: 100vh;
-  box-sizing: border-box;
-  padding-top: 84px; /* header + small gap */
-}
-
-#app-stage {
-  position: relative;
-  width: 100%;
-  height: calc(100vh - 84px);
-  overflow: auto;
-}
-
-/* =========================
    WAREHOUSE MAP
 ========================= */
 #warehouse-container {
   position: absolute;
-  width: 1830px; /* expanded to fit outside axis labels */
-  height: 1450px; /* expanded to fit bottom labels + controls */
+  width: 1798px;
+  height: 1488px;
   transform-origin: top left;
 }
 
 .grid-stack {
   position: absolute;
-  left: 60px;   /* space for row labels */
-  top: 50px;    /* space for top number labels */
+  left: 60px;
+  top: 110px;
   width: 1730px;
   height: 1350px;
   background: #add8e6;
@@ -187,7 +182,7 @@ h2 {
   align-items: center;
   justify-content: center;
   user-select: none;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.88);
   border-radius: 6px;
 }
 
@@ -271,8 +266,8 @@ h2 {
 }
 
 #add-product-panel {
-  top: 600px;
-  left: 1500px;
+  top: 650px;
+  left: 1360px;
   background: #27ae60;
   z-index: 120;
 }
@@ -323,7 +318,31 @@ h2 {
 }
 
 /* =========================
-   SUMMARY MODAL + HISTORY MODAL
+   UNDO BUTTON
+========================= */
+#undo-btn {
+  position: absolute;
+  right: 14px;
+  bottom: 16px;
+  background: #8e44ad;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  width: 84px;
+  height: 84px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1300;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+}
+
+#undo-btn:hover {
+  filter: brightness(1.08);
+}
+
+/* =========================
+   MODALS
 ========================= */
 .modal {
   display: none;
@@ -339,11 +358,11 @@ h2 {
 
 .modal-content {
   background-color: #fefefe;
-  margin: 6% auto;
+  margin: 4% auto;
   padding: 20px;
   border: 1px solid #888;
-  width: 88%;
-  max-width: 900px;
+  width: 92%;
+  max-width: 980px;
   border-radius: 10px;
   box-sizing: border-box;
 }
@@ -365,7 +384,7 @@ h2 {
 
 #history-output,
 #inventory-summary-modal-output {
-  max-height: 500px;
+  max-height: 560px;
   overflow-y: auto;
   margin-top: 14px;
   padding: 12px;
@@ -376,30 +395,6 @@ h2 {
   line-height: 1.5;
 }
 
-.history-account-block {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
-}
-
-.history-account-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 8px;
-  color: #1f2d3d;
-}
-
-.history-entry {
-  padding: 8px 0;
-  border-bottom: 1px solid #ececec;
-}
-
-.history-entry:last-child {
-  border-bottom: none;
-}
-
 .summary-row {
   padding: 8px 0;
   border-bottom: 1px solid #ddd;
@@ -407,6 +402,30 @@ h2 {
 
 .summary-row:last-child {
   border-bottom: none;
+}
+
+/* =========================
+   TABLES
+========================= */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid #d9d9d9;
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table th {
+  background: #e9eef4;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 /* =========================
