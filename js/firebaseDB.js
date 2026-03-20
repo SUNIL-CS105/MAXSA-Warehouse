@@ -1,110 +1,143 @@
-// firebaseDB.js
+window.warehouseRef = null;
+window.historyRef = null;
 
-window.__warehouseLoaded = false;
-window.palletsRef = window.database.ref("warehouse/pallets");
+window.saveWarehouseData = function saveWarehouseData() {
+  const data = {};
 
-// SAFE: Only updates the specific pallet that moved or was added
-window.upsertPalletToDB = function upsertPalletToDB(pallet) {
-  if (!pallet || !pallet.id) return;
-  return window.palletsRef.child(pallet.id).set({
-    itemId: pallet.itemId,
-    quantity: pallet.quantity,
-    location: pallet.location
+  window.pallets.forEach(p => {
+    if (p.location !== 'SHIPPED' && p.location !== 'TO-8412-OFFICE') {
+      data[p.id] = {
+        itemId: p.itemId,
+        quantity: p.quantity,
+        location: p.location
+      };
+    }
   });
-};
 
-// SAFE: Removes only the specific pallet from DB
-window.deletePalletFromDB = function deletePalletFromDB(palletId) {
-  if (!palletId) return;
-  return window.palletsRef.child(palletId).remove();
+  window.database.ref('warehouse/pallets').set(data);
 };
 
 window.loadWarehouseData = function loadWarehouseData() {
-  const loading = document.getElementById("loading-indicator");
-  if (loading) loading.style.display = "flex";
+  const loading = document.getElementById('loading-indicator');
+  if (loading) loading.style.display = 'flex';
 
-  // Use .once for initial load to prevent feedback loops
-  window.palletsRef.once("value", (snapshot) => {
+  if (window.warehouseRef) {
+    window.warehouseRef.off();
+  }
+
+  window.warehouseRef = window.database.ref('warehouse/pallets');
+
+  window.warehouseRef.on('value', (snapshot) => {
     const data = snapshot.val();
-    
-    // Clear old pallets from DOM
+
+    // clear old pallets from DOM
     window.pallets.forEach(p => p.remove());
     window.pallets = [];
     window.palletsByLocation = {};
 
     if (data) {
-      Object.entries(data).forEach(([id, palletData]) => {
-        const pallet = new window.Pallet(id, palletData.itemId, palletData.quantity, palletData.location);
-
-        document.querySelector(".grid-stack").appendChild(pallet.el);
-        window.pallets.push(pallet);
-
-        if (!window.palletsByLocation[pallet.location]) window.palletsByLocation[pallet.location] = [];
-        window.palletsByLocation[pallet.location].push(pallet);
+      Object.values(data).forEach(palletData => {
+        window.createNewPallet(
+          palletData.itemId,
+          palletData.quantity,
+          palletData.location,
+          false
+        );
       });
-
-      Object.keys(window.palletsByLocation).forEach(loc => window.adjustPalletSizesAtLocation(loc));
     }
 
     window.updateInventorySummary();
-    window.__warehouseLoaded = true;
-    if (loading) loading.style.display = "none";
+    window.applyEditModeUI();
+
+    if (loading) loading.style.display = 'none';
   });
 };
 
-// --- History ---
-window.recordHistory = function recordHistory(type, itemId, quantity) {
+window.recordHistory = function recordHistory({
+  action,
+  itemId,
+  quantity,
+  fromLocation,
+  toLocation
+}) {
   const user = firebase.auth().currentUser;
   if (!user) return;
 
-  const historyRef = window.database.ref(`users/${user.uid}/history`).push();
+  const email = user.email || 'unknown';
+  const accountName = email.split('@')[0];
+
+  const historyRef = window.database.ref('warehouse/history').push();
+
   historyRef.set({
-    type,
-    itemId,
-    quantity,
+    uid: user.uid,
+    email,
+    accountName,
+    action: action || 'move',
+    itemId: itemId || '',
+    quantity: quantity || 0,
+    fromLocation: fromLocation || '',
+    toLocation: toLocation || '',
     timestamp: Date.now()
   });
 };
 
-window.showHistory = function showHistory(type) {
-  const user = firebase.auth().currentUser;
-  if (!user) return;
-
+window.showHistory = function showHistory() {
   const modalTitle = document.getElementById('history-modal-title');
   const historyOutput = document.getElementById('history-output');
+  const modal = document.getElementById('history-modal');
+
+  modalTitle.innerText = 'Warehouse Movement History';
   historyOutput.innerHTML = 'Loading...';
+  modal.style.display = 'block';
 
-  const historyRef = window.database.ref(`users/${user.uid}/history`).orderByChild('timestamp');
-  historyRef.on('value', (snapshot) => {
-    const data = snapshot.val();
-    historyOutput.innerHTML = '';
+  window.database.ref('warehouse/history').orderByChild('timestamp').once('value')
+    .then(snapshot => {
+      const data = snapshot.val();
 
-    if (!data) {
-      historyOutput.innerHTML = 'No history found.';
-      document.getElementById('history-modal').style.display = 'block';
-      return;
-    }
+      if (!data) {
+        historyOutput.innerHTML = 'No history found.';
+        return;
+      }
 
-    const entries = Object.values(data)
-      .filter(entry => {
-        if (type === 'new-product') return entry.type === 'new-product';
-        if (type === 'shipped') return entry.type === 'SHIPPED';
-        if (type === 'to-office') return entry.type === 'TO-8412-OFFICE';
-        return false;
-      })
-      .reverse();
+      const entries = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
 
-    modalTitle.innerText = `${type.replace(/-/g, ' ').toUpperCase()} History`;
-
-    if (entries.length > 0) {
+      const grouped = {};
       entries.forEach(entry => {
-        const date = new Date(entry.timestamp).toLocaleString();
-        historyOutput.innerHTML += `<b>${date}</b>: ${entry.itemId} (Q: ${entry.quantity})<br>`;
+        const account = entry.accountName || 'unknown';
+        if (!grouped[account]) grouped[account] = [];
+        grouped[account].push(entry);
       });
-    } else {
-      historyOutput.innerHTML = 'No history for this category.';
-    }
 
-    document.getElementById('history-modal').style.display = 'block';
-  });
+      historyOutput.innerHTML = '';
+
+      Object.keys(grouped).sort().forEach(account => {
+        const block = document.createElement('div');
+        block.className = 'history-account-block';
+
+        const title = document.createElement('div');
+        title.className = 'history-account-title';
+        title.textContent = `Account: ${account}`;
+        block.appendChild(title);
+
+        grouped[account].forEach(entry => {
+          const row = document.createElement('div');
+          row.className = 'history-entry';
+
+          const date = new Date(entry.timestamp).toLocaleString();
+          row.innerHTML = `
+            <div><b>${date}</b></div>
+            <div>Product ID: <b>${entry.itemId}</b></div>
+            <div>Quantity: <b>${entry.quantity}</b></div>
+            <div>Initial Location: <b>${entry.fromLocation || '-'}</b></div>
+            <div>Final Location: <b>${entry.toLocation || '-'}</b></div>
+          `;
+          block.appendChild(row);
+        });
+
+        historyOutput.appendChild(block);
+      });
+    })
+    .catch(error => {
+      historyOutput.innerHTML = `Error loading history: ${error.message}`;
+    });
 };
