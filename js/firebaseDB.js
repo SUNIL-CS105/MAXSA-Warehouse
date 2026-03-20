@@ -1,5 +1,4 @@
 window.warehouseRef = null;
-window.historyRef = null;
 
 window.saveWarehouseData = function saveWarehouseData() {
   const data = {};
@@ -30,18 +29,18 @@ window.loadWarehouseData = function loadWarehouseData() {
   window.warehouseRef.on('value', (snapshot) => {
     const data = snapshot.val();
 
-    // clear old pallets from DOM
     window.pallets.forEach(p => p.remove());
     window.pallets = [];
     window.palletsByLocation = {};
 
     if (data) {
-      Object.values(data).forEach(palletData => {
+      Object.entries(data).forEach(([palletId, palletData]) => {
         window.createNewPallet(
           palletData.itemId,
           palletData.quantity,
           palletData.location,
-          false
+          false,
+          palletId
         );
       });
     }
@@ -81,6 +80,24 @@ window.recordHistory = function recordHistory({
   });
 };
 
+window.purgeOldHistory = function purgeOldHistory() {
+  const cutoff = Date.now() - (60 * 24 * 60 * 60 * 1000);
+
+  return window.database.ref('warehouse/history').once('value').then(snapshot => {
+    const data = snapshot.val();
+    if (!data) return;
+
+    const removals = [];
+    Object.entries(data).forEach(([key, entry]) => {
+      if ((entry.timestamp || 0) < cutoff) {
+        removals.push(window.database.ref(`warehouse/history/${key}`).remove());
+      }
+    });
+
+    return Promise.all(removals);
+  });
+};
+
 window.showHistory = function showHistory() {
   const modalTitle = document.getElementById('history-modal-title');
   const historyOutput = document.getElementById('history-output');
@@ -90,7 +107,8 @@ window.showHistory = function showHistory() {
   historyOutput.innerHTML = 'Loading...';
   modal.style.display = 'block';
 
-  window.database.ref('warehouse/history').orderByChild('timestamp').once('value')
+  window.purgeOldHistory()
+    .then(() => window.database.ref('warehouse/history').orderByChild('timestamp').once('value'))
     .then(snapshot => {
       const data = snapshot.val();
 
@@ -101,41 +119,45 @@ window.showHistory = function showHistory() {
 
       const entries = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
 
-      const grouped = {};
+      if (!entries.length) {
+        historyOutput.innerHTML = 'No history found.';
+        return;
+      }
+
+      let html = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Person</th>
+              <th>Product ID</th>
+              <th>Initial Location</th>
+              <th>Final Location</th>
+              <th>Quantity</th>
+              <th>Date / Time</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
       entries.forEach(entry => {
-        const account = entry.accountName || 'unknown';
-        if (!grouped[account]) grouped[account] = [];
-        grouped[account].push(entry);
+        html += `
+          <tr>
+            <td>${entry.accountName || '-'}</td>
+            <td>${entry.itemId || '-'}</td>
+            <td>${entry.fromLocation || '-'}</td>
+            <td>${entry.toLocation || '-'}</td>
+            <td>${entry.quantity || 0}</td>
+            <td>${new Date(entry.timestamp).toLocaleString()}</td>
+          </tr>
+        `;
       });
 
-      historyOutput.innerHTML = '';
+      html += `
+          </tbody>
+        </table>
+      `;
 
-      Object.keys(grouped).sort().forEach(account => {
-        const block = document.createElement('div');
-        block.className = 'history-account-block';
-
-        const title = document.createElement('div');
-        title.className = 'history-account-title';
-        title.textContent = `Account: ${account}`;
-        block.appendChild(title);
-
-        grouped[account].forEach(entry => {
-          const row = document.createElement('div');
-          row.className = 'history-entry';
-
-          const date = new Date(entry.timestamp).toLocaleString();
-          row.innerHTML = `
-            <div><b>${date}</b></div>
-            <div>Product ID: <b>${entry.itemId}</b></div>
-            <div>Quantity: <b>${entry.quantity}</b></div>
-            <div>Initial Location: <b>${entry.fromLocation || '-'}</b></div>
-            <div>Final Location: <b>${entry.toLocation || '-'}</b></div>
-          `;
-          block.appendChild(row);
-        });
-
-        historyOutput.appendChild(block);
-      });
+      historyOutput.innerHTML = html;
     })
     .catch(error => {
       historyOutput.innerHTML = `Error loading history: ${error.message}`;
