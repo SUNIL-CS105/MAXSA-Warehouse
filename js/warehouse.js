@@ -1,19 +1,20 @@
-// ===============================
-// warehouse.js
-// ===============================
-
-// --- Warehouse App Variables / Constants ---
 window.CELL_WIDTH = 80;
 window.CELL_HEIGHT = 50;
+
+window.GRID_LEFT = 60;
+window.HEADER_TOP = 0;
+window.HEADER_HEIGHT = 72;
+window.GRID_TOP = 110;
 
 window.pallets = [];
 window.palletsByLocation = {};
 window.scale = 1.0;
 window.isDraggingPallet = false;
-window.editMode = true;
+window.editMode = false;
 window.warehouseAppInitialized = false;
+window.undoStack = [];
+window.isUndoing = false;
 
-// --- Location definitions ---
 window.locations = {
   gridLabels: {
     rows: ['X','W','V','U','T','S','R','Q','P','O','N','M','L','K','J','I','H','G','F','E','D','C','B','A'],
@@ -58,14 +59,10 @@ window.locations = {
   ]
 };
 
-// -------------------------------------------------
-// Grid / Locations / Axis labels
-// -------------------------------------------------
 window.createGridLabels = function createGridLabels() {
   const container = document.querySelector('.grid-stack');
   container.innerHTML = '';
 
-  // Main grid
   const rows = window.locations.gridLabels.rows;
   for (let r = 0; r < rows.length; r++) {
     for (let c = 1; c <= window.locations.gridLabels.cols; c++) {
@@ -81,7 +78,6 @@ window.createGridLabels = function createGridLabels() {
     }
   }
 
-  // Offices
   const off = window.locations.offices;
   for (let i = 1; i <= off.count; i++) {
     const col = i % off.cols;
@@ -98,7 +94,6 @@ window.createGridLabels = function createGridLabels() {
     container.appendChild(div);
   }
 
-  // Restrooms / shelves / temp
   window.locations.restroomsShelvesTemp.forEach(item => {
     const div = document.createElement('div');
     div.className = 'label-cell restroom-zone';
@@ -111,7 +106,6 @@ window.createGridLabels = function createGridLabels() {
     container.appendChild(div);
   });
 
-  // Drop zones
   window.locations.dropZones.forEach(zone => {
     const div = document.createElement('div');
     div.className = 'label-cell drop-zone';
@@ -134,10 +128,9 @@ window.createAxisLabels = function createAxisLabels() {
 
   wrapper.querySelectorAll('.axis-label').forEach(el => el.remove());
 
-  const gridLeft = 60;
-  const gridTop = 50;
+  const gridLeft = window.GRID_LEFT;
+  const gridTop = window.GRID_TOP;
 
-  // Top column numbers
   for (let c = 1; c <= 11; c++) {
     const topLabel = document.createElement('div');
     topLabel.className = 'axis-label axis-col-top';
@@ -154,7 +147,6 @@ window.createAxisLabels = function createAxisLabels() {
     wrapper.appendChild(bottomLabel);
   }
 
-  // Left row letters aligned to actual map rows
   const rows = window.locations.gridLabels.rows;
   for (let r = 0; r < rows.length; r++) {
     const rowLabel = document.createElement('div');
@@ -166,7 +158,6 @@ window.createAxisLabels = function createAxisLabels() {
   }
 };
 
-// reliable rectangle hit-test
 window.getLocationAtClientPoint = function (clientX, clientY) {
   const cells = document.querySelectorAll(".label-cell");
   for (const cell of cells) {
@@ -183,11 +174,8 @@ window.getLocationAtClientPoint = function (clientX, clientY) {
   return null;
 };
 
-// -------------------------------------------------
-// Pallets
-// -------------------------------------------------
-window.createNewPallet = function createNewPallet(itemId, quantity, location = "New_#", record = true) {
-  const id = 'pallet-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+window.createNewPallet = function createNewPallet(itemId, quantity, location = "New_#", record = true, forcedId = null) {
+  const id = forcedId || ('pallet-' + Date.now() + '-' + Math.floor(Math.random() * 100000));
   const pallet = new window.Pallet(id, itemId, quantity, location);
 
   document.querySelector('.grid-stack').appendChild(pallet.el);
@@ -214,6 +202,50 @@ window.createNewPallet = function createNewPallet(itemId, quantity, location = "
 
   pallet.updateText();
   return pallet;
+};
+
+window.findPalletById = function findPalletById(palletId) {
+  return window.pallets.find(p => p.id === palletId) || null;
+};
+
+window.registerUndoAction = function registerUndoAction(action) {
+  if (window.isUndoing) return;
+  window.undoStack.push(action);
+};
+
+window.undoLastAction = function undoLastAction() {
+  if (!window.undoStack.length) {
+    alert("Nothing to undo.");
+    return;
+  }
+
+  const action = window.undoStack.pop();
+  if (!action || action.type !== 'move') return;
+
+  window.isUndoing = true;
+
+  try {
+    let pallet = window.findPalletById(action.palletId);
+
+    if (pallet) {
+      pallet.moveToLocation(action.fromLocation, {
+        recordHistory: false,
+        pushUndo: false
+      });
+    } else {
+      window.createNewPallet(
+        action.itemId,
+        action.quantity,
+        action.fromLocation,
+        false,
+        action.palletId
+      );
+      window.saveWarehouseData();
+      window.updateInventorySummary();
+    }
+  } finally {
+    window.isUndoing = false;
+  }
 };
 
 window.adjustPalletSizesAtLocation = function adjustPalletSizesAtLocation(location) {
@@ -260,37 +292,59 @@ window.positionPalletInLocation = function positionPalletInLocation(pallet) {
   pallet.el.style.height = `${palletHeight}px`;
 };
 
-// -------------------------------------------------
-// Inventory Summary
-// -------------------------------------------------
 window.getInventorySummaryData = function getInventorySummaryData() {
-  const summary = {};
-
-  window.pallets.forEach(p => {
-    if (p.location !== 'SHIPPED' && p.location !== 'TO-8412-OFFICE') {
-      summary[p.itemId] = (summary[p.itemId] || 0) + p.quantity;
-    }
-  });
-
-  return summary;
+  return window.pallets
+    .filter(p => p.location !== 'SHIPPED' && p.location !== 'TO-8412-OFFICE')
+    .map(p => ({
+      itemId: p.itemId,
+      location: p.location,
+      quantity: p.quantity
+    }))
+    .sort((a, b) => {
+      if (a.itemId !== b.itemId) return a.itemId.localeCompare(b.itemId);
+      return a.location.localeCompare(b.location);
+    });
 };
 
 window.updateInventorySummary = function updateInventorySummary() {
   const out = document.getElementById('inventory-summary-modal-output');
   if (!out) return;
 
-  const summary = window.getInventorySummaryData();
-  const keys = Object.keys(summary).sort();
+  const rows = window.getInventorySummaryData();
 
-  if (keys.length === 0) {
+  if (!rows.length) {
     out.innerHTML = 'No inventory found.';
     return;
   }
 
-  out.innerHTML = '';
-  keys.forEach(key => {
-    out.innerHTML += `<div class="summary-row"><b>${key}</b>: ${summary[key]}</div>`;
+  let html = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Product ID</th>
+          <th>Location</th>
+          <th>Quantity</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  rows.forEach(row => {
+    html += `
+      <tr>
+        <td>${row.itemId}</td>
+        <td>${row.location}</td>
+        <td>${row.quantity}</td>
+      </tr>
+    `;
   });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+
+  out.innerHTML = html;
 };
 
 window.showInventorySummaryModal = function showInventorySummaryModal() {
@@ -299,27 +353,24 @@ window.showInventorySummaryModal = function showInventorySummaryModal() {
   modal.style.display = 'block';
 };
 
-// -------------------------------------------------
-// Excel / CSV Export
-// -------------------------------------------------
 window.downloadInventoryExcel = function downloadInventoryExcel() {
-  const rows = [
-    ['Item ID', 'Total Quantity']
-  ];
+  const rows = window.getInventorySummaryData();
 
-  const summary = window.getInventorySummaryData();
-  const keys = Object.keys(summary).sort();
-
-  keys.forEach(key => {
-    rows.push([key, summary[key]]);
-  });
-
-  if (rows.length === 1) {
+  if (!rows.length) {
     alert('No inventory data to export.');
     return;
   }
 
-  const csvContent = rows
+  const csvRows = [
+    ['Product Details', '', 'Inventory Details'],
+    ['Product ID', 'Location', 'Quantity']
+  ];
+
+  rows.forEach(row => {
+    csvRows.push([row.itemId, row.location, row.quantity]);
+  });
+
+  const csvContent = csvRows
     .map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
@@ -329,16 +380,13 @@ window.downloadInventoryExcel = function downloadInventoryExcel() {
   const link = document.createElement('a');
   const today = new Date().toISOString().slice(0, 10);
   link.href = url;
-  link.download = `MAXSA_Inventory_${today}.csv`;
+  link.download = `MAXSA_Inventory_By_Location_${today}.csv`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
 
-// -------------------------------------------------
-// Edit Mode
-// -------------------------------------------------
 window.applyEditModeUI = function applyEditModeUI() {
   const editBtn = document.getElementById('edit-mode-btn');
   const addPanel = document.getElementById('add-product-panel');
@@ -358,31 +406,25 @@ window.applyEditModeUI = function applyEditModeUI() {
   window.pallets.forEach(p => p.updateText());
 };
 
-// -------------------------------------------------
-// Scaling / responsiveness
-// -------------------------------------------------
 window.scaleGrid = function scaleGrid() {
   const container = document.querySelector('#warehouse-container');
   const stage = document.querySelector('#app-stage');
 
   if (!container || !stage) return;
 
-  const availableWidth = stage.clientWidth - 20;
-  const availableHeight = stage.clientHeight - 20;
+  const availableWidth = stage.clientWidth - 12;
+  const availableHeight = stage.clientHeight - 12;
 
-  const originalWidth = 1830;
-  const originalHeight = 1450;
+  const originalWidth = 1798;
+  const originalHeight = 1488;
 
   window.scale = Math.min(availableWidth / originalWidth, availableHeight / originalHeight, 1);
 
   container.style.transform = `scale(${window.scale})`;
-  container.style.left = `${Math.max((availableWidth - originalWidth * window.scale) / 2, 10)}px`;
-  container.style.top = `${Math.max((availableHeight - originalHeight * window.scale) / 2, 10)}px`;
+  container.style.left = `${Math.max((availableWidth - originalWidth * window.scale) / 2, 4)}px`;
+  container.style.top = `${Math.max((availableHeight - originalHeight * window.scale) / 2, 4)}px`;
 };
 
-// -------------------------------------------------
-// App init
-// -------------------------------------------------
 window.initWarehouseApp = function initWarehouseApp() {
   if (window.warehouseAppInitialized) {
     window.scaleGrid();
