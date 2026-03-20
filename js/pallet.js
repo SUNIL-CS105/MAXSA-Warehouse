@@ -39,7 +39,6 @@ window.Pallet = class Pallet {
   }
 
   addEventListeners() {
-    // TRUE DRAG
     this.el.addEventListener("pointerdown", (e) => {
       if (!window.editMode) return;
       if (e.target === this.splitArrow) return;
@@ -108,7 +107,6 @@ window.Pallet = class Pallet {
       window.adjustPalletSizesAtLocation(this.location);
     });
 
-    // Split arrow
     this.splitArrow.addEventListener("click", (e) => {
       e.stopPropagation();
 
@@ -151,14 +149,29 @@ window.Pallet = class Pallet {
     });
   }
 
-  moveToLocation(newLoc) {
+  moveToLocation(newLoc, options = {}) {
+    const {
+      recordHistory = true,
+      pushUndo = true
+    } = options;
+
     const oldLoc = this.location;
     if (!newLoc || newLoc === oldLoc) {
       window.adjustPalletSizesAtLocation(this.location);
       return;
     }
 
-    // remove from old stack
+    if (pushUndo && typeof window.registerUndoAction === 'function') {
+      window.registerUndoAction({
+        type: 'move',
+        palletId: this.id,
+        itemId: this.itemId,
+        quantity: this.quantity,
+        fromLocation: oldLoc,
+        toLocation: newLoc
+      });
+    }
+
     if (window.palletsByLocation[oldLoc]) {
       window.palletsByLocation[oldLoc] =
         window.palletsByLocation[oldLoc].filter(p => p !== this);
@@ -168,15 +181,16 @@ window.Pallet = class Pallet {
       }
     }
 
-    // shipped / to office = record then remove
     if (newLoc === "SHIPPED" || newLoc === "TO-8412-OFFICE") {
-      window.recordHistory({
-        action: 'move',
-        itemId: this.itemId,
-        quantity: this.quantity,
-        fromLocation: oldLoc,
-        toLocation: newLoc
-      });
+      if (recordHistory) {
+        window.recordHistory({
+          action: 'move',
+          itemId: this.itemId,
+          quantity: this.quantity,
+          fromLocation: oldLoc,
+          toLocation: newLoc
+        });
+      }
 
       this.location = newLoc;
       this.el.dataset.location = newLoc;
@@ -190,20 +204,21 @@ window.Pallet = class Pallet {
       return;
     }
 
-    // add to new stack
     if (!window.palletsByLocation[newLoc]) window.palletsByLocation[newLoc] = [];
     window.palletsByLocation[newLoc].push(this);
 
     this.location = newLoc;
     this.el.dataset.location = newLoc;
 
-    window.recordHistory({
-      action: 'move',
-      itemId: this.itemId,
-      quantity: this.quantity,
-      fromLocation: oldLoc,
-      toLocation: newLoc
-    });
+    if (recordHistory) {
+      window.recordHistory({
+        action: 'move',
+        itemId: this.itemId,
+        quantity: this.quantity,
+        fromLocation: oldLoc,
+        toLocation: newLoc
+      });
+    }
 
     window.adjustPalletSizesAtLocation(oldLoc);
     window.adjustPalletSizesAtLocation(newLoc);
