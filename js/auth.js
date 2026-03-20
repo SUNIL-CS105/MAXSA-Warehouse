@@ -6,10 +6,10 @@ window.initAuth = function initAuth() {
     const headerBar = document.getElementById('app-header');
 
     if (user) {
-      loginContainer.style.display = 'none';
-      signupContainer.style.display = 'none';
-      warehouseApp.style.display = 'block';
-      headerBar.style.display = 'flex';
+      if (loginContainer) loginContainer.style.display = 'none';
+      if (signupContainer) signupContainer.style.display = 'none';
+      if (warehouseApp) warehouseApp.style.display = 'block';
+      if (headerBar) headerBar.style.display = 'flex';
 
       if (typeof window.initWarehouseApp === 'function') {
         window.initWarehouseApp();
@@ -23,47 +23,63 @@ window.initAuth = function initAuth() {
         window.applyEditModeUI();
       }
     } else {
-      loginContainer.style.display = 'flex';
-      signupContainer.style.display = 'none';
-      warehouseApp.style.display = 'none';
-      headerBar.style.display = 'none';
+      if (loginContainer) loginContainer.style.display = 'flex';
+      if (signupContainer) signupContainer.style.display = 'none';
+      if (warehouseApp) warehouseApp.style.display = 'none';
+      if (headerBar) headerBar.style.display = 'none';
     }
   });
 };
 
-window.onload = function () {
-  document.getElementById('login-btn').addEventListener('click', () => {
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
+document.addEventListener('DOMContentLoaded', function () {
+  const loginBtn = document.getElementById('login-btn');
+  const signupBtn = document.getElementById('signup-btn');
+  const showSignup = document.getElementById('show-signup');
+  const showLogin = document.getElementById('show-login');
+  const logoutBtn = document.getElementById('logout-btn');
 
-    firebase.auth().signInWithEmailAndPassword(email, password)
-      .catch(error => alert(error.message));
-  });
+  if (loginBtn) {
+    loginBtn.addEventListener('click', () => {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
 
-  document.getElementById('show-signup').addEventListener('click', () => {
-    document.getElementById('login-container').style.display = 'none';
-    document.getElementById('signup-container').style.display = 'flex';
-  });
+      firebase.auth().signInWithEmailAndPassword(email, password)
+        .catch(error => alert(error.message));
+    });
+  }
 
-  document.getElementById('show-login').addEventListener('click', () => {
-    document.getElementById('signup-container').style.display = 'none';
-    document.getElementById('login-container').style.display = 'flex';
-  });
+  if (signupBtn) {
+    signupBtn.addEventListener('click', () => {
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
 
-  document.getElementById('signup-btn').addEventListener('click', () => {
-    const email = document.getElementById('signup-email').value.trim();
-    const password = document.getElementById('signup-password').value;
+      firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then(() => {
+          alert("Sign up successful! You are now logged in.");
+        })
+        .catch(error => alert(error.message));
+    });
+  }
 
-    firebase.auth().createUserWithEmailAndPassword(email, password)
-      .then(() => {
-        alert("Sign up successful! You are now logged in.");
-      })
-      .catch(error => alert(error.message));
-  });
+  if (showSignup) {
+    showSignup.addEventListener('click', () => {
+      document.getElementById('login-container').style.display = 'none';
+      document.getElementById('signup-container').style.display = 'flex';
+    });
+  }
 
-  document.getElementById('logout-btn').addEventListener('click', () => {
-    firebase.auth().signOut();
-  });
+  if (showLogin) {
+    showLogin.addEventListener('click', () => {
+      document.getElementById('signup-container').style.display = 'none';
+      document.getElementById('login-container').style.display = 'flex';
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      firebase.auth().signOut();
+    });
+  }
 
   window.initAuth();
-};
+});
