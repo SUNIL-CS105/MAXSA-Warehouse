@@ -1,4 +1,4 @@
-=window.initAuth = function initAuth() {
+window.initAuth = function initAuth() {
   firebase.auth().onAuthStateChanged(user => {
     const loginContainer = document.getElementById('login-container');
     const signupContainer = document.getElementById('signup-container');
