@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MAXSA Warehouse Map</title>
 
-  <!-- Firebase CDN (v8) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -14,7 +13,6 @@
 </head>
 <body>
 
-  <!-- LOGIN -->
   <div id="login-container">
     <div class="login-box">
       <h2>Warehouse Login</h2>
@@ -25,7 +23,6 @@
     </div>
   </div>
 
-  <!-- SIGNUP -->
   <div id="signup-container" style="display:none;">
     <div class="login-box">
       <h2>Warehouse Sign Up</h2>
@@ -36,28 +33,26 @@
     </div>
   </div>
 
-  <!-- LOADING -->
   <div id="loading-indicator">Loading warehouse data...</div>
 
-  <!-- APP HEADER -->
-  <div id="app-header" class="app-header" style="display:none;">
-    <div class="app-header-left">
-      <div class="app-title">MAXSA</div>
-    </div>
-
-    <div class="app-header-right">
-      <button type="button" id="edit-mode-btn" class="header-btn">Edit: ON</button>
-      <button type="button" id="excel-export-btn" class="header-btn">Download Excel</button>
-      <button type="button" id="inventory-summary-btn" class="header-btn">Inventory Summary</button>
-      <button type="button" id="history-btn" class="header-btn">History</button>
-      <button type="button" id="logout-btn" class="header-btn">Logout</button>
-    </div>
-  </div>
-
-  <!-- APP -->
   <div id="warehouse-app" style="display:none;">
     <div id="app-stage">
       <div id="warehouse-container">
+
+        <div id="app-header" class="map-header">
+          <div class="app-header-left">
+            <div class="app-title">MAXSA</div>
+          </div>
+
+          <div class="app-header-right">
+            <button type="button" id="edit-mode-btn" class="header-btn">Edit: ON</button>
+            <button type="button" id="excel-export-btn" class="header-btn">Download Excel</button>
+            <button type="button" id="inventory-summary-btn" class="header-btn">Inventory Summary</button>
+            <button type="button" id="history-btn" class="header-btn">History</button>
+            <button type="button" id="logout-btn" class="header-btn">Logout</button>
+          </div>
+        </div>
+
         <div class="grid-stack"></div>
 
         <div id="add-product-panel" class="control-panel">
@@ -67,10 +62,11 @@
           <button type="button" id="add-product-btn">➕ Add New Product</button>
           <div class="view-only-hint">Turn Edit OFF to prevent moving/splitting/adding.</div>
         </div>
+
+        <button type="button" id="undo-btn" title="Undo last move">UNDO</button>
       </div>
     </div>
 
-    <!-- HISTORY MODAL -->
     <div id="history-modal" class="modal">
       <div class="modal-content">
         <span class="close-btn">&times;</span>
@@ -79,7 +75,6 @@
       </div>
     </div>
 
-    <!-- INVENTORY SUMMARY MODAL -->
     <div id="inventory-summary-modal" class="modal">
       <div class="modal-content">
         <span class="close-btn">&times;</span>
@@ -89,13 +84,11 @@
     </div>
   </div>
 
-  <!-- SCRIPT ORDER -->
   <script src="js/config/firebase.js"></script>
   <script src="js/firebaseDB.js"></script>
   <script src="js/pallet.js"></script>
   <script src="js/warehouse.js"></script>
   <script src="js/events.js"></script>
   <script src="js/auth.js"></script>
-
 </body>
 </html>
