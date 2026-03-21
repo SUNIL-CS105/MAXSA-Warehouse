@@ -49,10 +49,10 @@ window.trainingSteps = [
     target: "SHIPPED"
   },
   {
-    title: "To-8412-Office",
+    title: "Moved To Office-8412",
     text: "Sending items to the office? Drop them in the TO-8412-OFFICE area.",
     tip: "This works just like the Shipped zone.",
-    target: "OFFICE"
+    target: "TO-8412-OFFICE"
   },
   {
     title: "History",
