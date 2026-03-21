@@ -97,66 +97,67 @@ window.currentTrainingStep = 0;
 // --- 2. SELF-CONTAINED STYLES ---
 const style = document.createElement('style');
 style.innerHTML = `
-  .training-target-highlight {
-    outline: 5px solid #007bff !important;
-    box-shadow: 0 0 25px rgba(0, 123, 255, 0.6) !important;
-    position: relative !important;
-    z-index: 10001 !important;
-    transition: all 0.4s ease;
-    border-radius: 4px;
-  }
-
+  /* 1. THE MAIN FIX: Remove the "long background" and set the theme */
   #training-modal {
     position: fixed !important;
     bottom: 25px !important;
     right: 25px !important;
     top: auto !important;
     left: auto !important;
-    width: 350px !important;
-    background: white !important;
-    padding: 20px !important;
+    width: 380px !important; /* Slightly wider for better text flow */
+    height: auto !important; /* THIS kills the extra white space at the bottom */
+    background: #f0f7ff !important; /* The Light Blue background */
+    padding: 0 !important; /* We let the inner content handle padding */
     z-index: 10002 !important;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    border: 1px solid #ddd;
-    font-family: sans-serif;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    border: 1px solid #cce3ff;
+    overflow: hidden;
   }
 
-  .training-step-badge {
-    background: #e7f3ff;
-    color: #007bff;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: bold;
-    margin-bottom: 12px;
-    display: inline-block;
-    text-transform: uppercase;
+  /* 2. Adjusting your existing 'body' to match the theme */
+  #training-body {
+    background: transparent !important; /* Remove the old gray background */
+    border: none !important; /* Remove the old border */
+    min-height: auto !important; /* Let it shrink to the text size */
+    padding: 24px !important;
   }
 
+  /* 3. High Contrast Text for readability */
+  .training-step-title {
+    color: #003366 !important; /* Dark Navy */
+    font-size: 22px !important;
+  }
+
+  .training-step-text {
+    color: #1a4a75 !important; /* Deep Blue-Gray */
+    font-size: 15px !important;
+  }
+
+  /* 4. The Tip Box - White card on Blue background looks great */
+  .training-step-tip {
+    background: #ffffff !important; 
+    border-left: 5px solid #ffcc00 !important; /* Yellow for attention */
+    color: #444 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  /* 5. Highlight effect for the actual warehouse elements */
+  .training-target-highlight {
+    outline: 5px solid #ffcc00 !important;
+    box-shadow: 0 0 20px rgba(255, 204, 0, 0.6) !important;
+    z-index: 10001 !important;
+  }
+
+  /* 6. Button Colors */
   #training-next-btn {
     background-color: #007bff !important;
-    color: white !important;
-    border: none !important;
-    padding: 8px 16px !important;
-    border-radius: 6px !important;
-    font-weight: bold !important;
-    cursor: pointer !important;
   }
-
+  
   #training-prev-btn {
-    background: none !important;
-    color: #666 !important;
-    border: 1px solid #ccc !important;
-    padding: 8px 16px !important;
-    border-radius: 6px !important;
-    margin-right: 10px;
-    cursor: pointer !important;
-  }
-
-  #training-prev-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
+    background: white !important;
+    color: #007bff !important;
+    border: 1px solid #007bff !important;
   }
 `;
 document.head.appendChild(style);
