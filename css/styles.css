@@ -305,7 +305,7 @@ body {
 }
 
 #add-product-panel button {
-  width: 100%;
+  width: 255px;
   padding: 8px;
   font-weight: bold;
   font-size: 14px;
