@@ -305,7 +305,7 @@ body {
 }
 
 #add-product-panel button {
-  width: 255px;
+  width: 100%;
   padding: 8px;
   font-weight: bold;
   font-size: 14px;
@@ -334,7 +334,7 @@ body {
 ========================= */
 #undo-btn {
   position: absolute;
-  left: 1555px;
+  left: 1355px;
   top: 850px;
   background: #8e44ad;
   color: white;
