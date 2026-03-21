@@ -1,5 +1,5 @@
 window.CELL_WIDTH = 85;
-window.CELL_HEIGHT = 52;
+window.CELL_HEIGHT = 50;
 
 window.GRID_LEFT = 60;
 window.HEADER_TOP = 0;
@@ -26,32 +26,32 @@ window.locations = {
     startTop: 0,
     cols: 6,
     cellWidth: 85,
-    cellHeight: 52
+    cellHeight: 50
   },
   restroomsShelvesTemp: [
     { name: 'Restroom1', left: 1100, top: 300 },
     { name: 'Restroom2', left: 1185, top: 300 },
-    { name: 'Shelf1', left: 1250, top: 300 },
-    { name: 'Shelf2', left: 1335, top: 300 },
-    { name: 'Shelf3', left: 1420, top: 300 },
-    { name: 'Shelf4', left: 1250, top: 352 },
-    { name: 'Shelf5', left: 1335, top: 352 },
-    { name: 'Shelf6', left: 1420, top: 352 },
+    { name: 'Shelf1', left: 1365, top: 300 },
+    { name: 'Shelf2', left: 1450, top: 300 },
+    { name: 'Shelf3', left: 1535, top: 300 },
+    { name: 'Shelf4', left: 1365, top: 350 },
+    { name: 'Shelf5', left: 1450, top: 350 },
+    { name: 'Shelf6', left: 1535, top: 350 },
     { name: 'New_#', left: 1100, top: 500, color: '#FFFFFF' },
-    { name: 'Temporary1', left: 1100, top: 850 },
-    { name: 'Temporary2', left: 1110, top: 902 },
-    { name: 'Temporary3', left: 1110, top: 954 },
-    { name: 'Temporary4', left: 1110, top: 1006 },
-    { name: 'Temporary5', left: 1110, top: 1058 },
-    { name: 'Temporary6', left: 1110, top: 1110 },
-    { name: 'Temporary7', left: 1110, top: 1162 },
+    { name: 'Temporary1', left: 1110, top: 850 },
+    { name: 'Temporary2', left: 1110, top: 900 },
+    { name: 'Temporary3', left: 1110, top: 950 },
+    { name: 'Temporary4', left: 1110, top: 1000 },
+    { name: 'Temporary5', left: 1110, top: 1050 },
+    { name: 'Temporary6', left: 1110, top: 1100 },
+    { name: 'Temporary7', left: 1110, top: 1150 },
     { name: 'Temporary8', left: 1195, top: 850 },
-    { name: 'Temporary9', left: 1195, top: 902 },
-    { name: 'Temporary10', left: 1195, top: 954 },
-    { name: 'Temporary11', left: 1195, top: 1006 },
-    { name: 'Temporary12', left: 1195, top: 1058 },
-    { name: 'Temporary13', left: 1195, top: 1110 },
-    { name: 'Temporary14', left: 1195, top: 1162 }
+    { name: 'Temporary9', left: 1195, top: 900 },
+    { name: 'Temporary10', left: 1195, top: 950 },
+    { name: 'Temporary11', left: 1195, top: 1000 },
+    { name: 'Temporary12', left: 1195, top: 1050 },
+    { name: 'Temporary13', left: 1195, top: 1100 },
+    { name: 'Temporary14', left: 1195, top: 1150 }
   ],
   dropZones: [
     { id: "SHIPPED", name: "SHIPPED", left: 1420, top: 1100, width: 160, height: 80, color: '#e74c3c' },
