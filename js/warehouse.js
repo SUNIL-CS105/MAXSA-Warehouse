@@ -1,4 +1,4 @@
-window.CELL_WIDTH = 80;
+window.CELL_WIDTH = 90;
 window.CELL_HEIGHT = 50;
 
 window.GRID_LEFT = 60;
