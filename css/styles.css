@@ -285,6 +285,7 @@ body {
 }
 
 #add-product-panel {
+  width: 255px
   top: 650px;
   left: 1355px;
   background: #27ae60;
