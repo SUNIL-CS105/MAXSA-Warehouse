@@ -19,38 +19,6 @@ body {
   overflow: auto;
 }
 
-#undo-btn {
-  position: absolute;
-  /* Calculated: Shipped Top (1100) + Shipped Height (80) + Gap (10) */
-  top: 1220px; 
-  left: 1420px;
-  
-  /* Matches the width of the Shipped/Office zones */
-  width: 160px; 
-  height: 40px;
-  
-  /* Style */
-  background-color: #f39c12; /* Orange */
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  z-index: 10;
-  transition: background 0.2s;
-}
-
-#undo-btn:hover {
-  background-color: #e67e22;
-}
-
-#undo-btn:active {
-  background-color: #d35400;
-}
-
-
-
-
 /* =========================
    MAP HEADER (attached to map)
 ========================= */
@@ -259,14 +227,14 @@ body {
   cursor: default;
 }
 
-.split-arrow {
+.split-arrow,
+.merge-arrow {
   position: absolute;
   top: 2px;
-  right: 4px;
   background: black;
   color: white;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 12px;
   width: 18px;
   height: 18px;
   line-height: 18px;
@@ -274,9 +242,19 @@ body {
   cursor: pointer;
   user-select: none;
   z-index: 10;
+  text-align: center;
 }
 
-.split-arrow.disabled {
+.split-arrow {
+  right: 4px;
+}
+
+.merge-arrow {
+  left: 4px;
+}
+
+.split-arrow.disabled,
+.merge-arrow.disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
@@ -349,24 +327,19 @@ body {
   opacity: 0.95;
 }
 
-
 /* =========================
    UNDO BUTTON
 ========================= */
 #undo-btn {
-  position: absolute; /* Keep this */
-  
-  /* --- NEW COORDINATES TO ALIGN BELOW SHIPPED --- */
-  left: 1450px;       /* Aligns with the left side of Shipped */
-  top: 850px;        /* 1100 (Shipped Top) + 80 (Height) + 10 (Gap) */
-
-  /* --- YOUR STYLING (Kept your purple theme) --- */
+  position: absolute;
+  left: 1450px;
+  top: 850px;
   background: #8e44ad;
   color: white;
   border: none;
   border-radius: 10px;
-  width: 160px;       /* Matches Shipped zone width exactly */
-  height: 45px;       /* Standard button height */
+  width: 160px;
+  height: 45px;
   font-size: 15px;
   font-weight: bold;
   cursor: pointer;
