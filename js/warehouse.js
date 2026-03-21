@@ -67,8 +67,8 @@ window.locations = {
     { name: 'Temporary14', left: 1195, top: 1150 }
   ],
   dropZones: [
-    { id: "SHIPPED", name: "SHIPPED", left: 1355, top: 1100, width: 255, height: 80, color: '#e74c3c' },
-    { id: "TO-8412-OFFICE", name: "TO-8412-OFFICE", left: 1355, top: 950, width: 255, height: 80, color: '#2980b9' }
+    { id: "SHIPPED", name: "SHIPPED", left: 1355, top: 1100, width: 255, height: 82, color: '#e74c3c' },
+    { id: "TO-8412-OFFICE", name: "TO-8412-OFFICE", left: 1355, top: 950, width: 255, height: 82, color: '#2980b9' }
   ]
 };
 
