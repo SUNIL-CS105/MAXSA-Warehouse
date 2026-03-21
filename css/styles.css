@@ -333,13 +333,13 @@ body {
 #undo-btn {
   position: absolute;
   left: 1450px;
-  top: 850px;
+  top: 900px;
   background: #8e44ad;
   color: white;
   border: none;
   border-radius: 10px;
-  width: 160px;
-  height: 45px;
+  width: 200px;
+  height: 80px;
   font-size: 15px;
   font-weight: bold;
   cursor: pointer;
