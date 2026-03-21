@@ -15,6 +15,19 @@ window.warehouseAppInitialized = false;
 window.undoStack = [];
 window.isUndoing = false;
 
+window.roundQuantity = function roundQuantity(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 1000) / 1000;
+};
+
+window.isValidQuantity = function isValidQuantity(value) {
+  return Number.isFinite(value) && value > 0;
+};
+
+window.formatQuantity = function formatQuantity(value) {
+  const rounded = window.roundQuantity(value);
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded).replace(/\.?0+$/, '');
+};
+
 window.locations = {
   gridLabels: {
     rows: ['X','W','V','U','T','S','R','Q','P','O','N','M','L','K','J','I','H','G','F','E','D','C','B','A'],
@@ -175,8 +188,15 @@ window.getLocationAtClientPoint = function (clientX, clientY) {
 };
 
 window.createNewPallet = function createNewPallet(itemId, quantity, location = "New_#", record = true, forcedId = null) {
+  const safeQuantity = window.roundQuantity(Number(quantity));
+
+  if (!window.isValidQuantity(safeQuantity)) {
+    alert("Invalid quantity.");
+    return null;
+  }
+
   const id = forcedId || ('pallet-' + Date.now() + '-' + Math.floor(Math.random() * 100000));
-  const pallet = new window.Pallet(id, itemId, quantity, location);
+  const pallet = new window.Pallet(id, itemId, safeQuantity, location);
 
   document.querySelector('.grid-stack').appendChild(pallet.el);
 
@@ -191,7 +211,7 @@ window.createNewPallet = function createNewPallet(itemId, quantity, location = "
     window.recordHistory({
       action: 'new-product',
       itemId,
-      quantity,
+      quantity: safeQuantity,
       fromLocation: 'CREATED',
       toLocation: location
     });
@@ -298,7 +318,7 @@ window.getInventorySummaryData = function getInventorySummaryData() {
   window.pallets
     .filter(p => p.location !== 'SHIPPED' && p.location !== 'TO-8412-OFFICE')
     .forEach(p => {
-      totals[p.itemId] = (totals[p.itemId] || 0) + p.quantity;
+      totals[p.itemId] = window.roundQuantity((totals[p.itemId] || 0) + p.quantity);
     });
 
   return Object.keys(totals)
@@ -315,7 +335,7 @@ window.getInventoryExportData = function getInventoryExportData() {
     .map(p => ({
       itemId: p.itemId,
       location: p.location,
-      quantity: p.quantity
+      quantity: window.formatQuantity(p.quantity)
     }))
     .sort((a, b) => {
       if (a.itemId !== b.itemId) return a.itemId.localeCompare(b.itemId);
@@ -349,7 +369,7 @@ window.updateInventorySummary = function updateInventorySummary() {
     html += `
       <tr>
         <td>${row.itemId}</td>
-        <td>${row.quantity}</td>
+        <td>${window.formatQuantity(row.quantity)}</td>
       </tr>
     `;
   });
