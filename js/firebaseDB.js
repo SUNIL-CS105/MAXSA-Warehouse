@@ -37,7 +37,7 @@ window.loadWarehouseData = function loadWarehouseData() {
       Object.entries(data).forEach(([palletId, palletData]) => {
         window.createNewPallet(
           palletData.itemId,
-          palletData.quantity,
+          Number(palletData.quantity),
           palletData.location,
           false,
           palletId
@@ -73,7 +73,7 @@ window.recordHistory = function recordHistory({
     accountName,
     action: action || 'move',
     itemId: itemId || '',
-    quantity: quantity || 0,
+    quantity: Number(quantity) || 0,
     fromLocation: fromLocation || '',
     toLocation: toLocation || '',
     timestamp: Date.now()
@@ -146,7 +146,7 @@ window.showHistory = function showHistory() {
             <td>${entry.itemId || '-'}</td>
             <td>${entry.fromLocation || '-'}</td>
             <td>${entry.toLocation || '-'}</td>
-            <td>${entry.quantity || 0}</td>
+            <td>${window.formatQuantity(entry.quantity || 0)}</td>
             <td>${new Date(entry.timestamp).toLocaleString()}</td>
           </tr>
         `;
