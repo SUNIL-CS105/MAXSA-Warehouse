@@ -22,7 +22,7 @@ window.locations = {
   },
   offices: {
     count: 30,
-    startLeft: 980,
+    startLeft: 1010,
     startTop: 0,
     cols: 6,
     cellWidth: 85,
