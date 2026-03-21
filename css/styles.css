@@ -286,7 +286,7 @@ body {
 
 #add-product-panel {
   top: 650px;
-  left: 1450px;
+  left: 1355px;
   background: #27ae60;
   z-index: 120;
 }
@@ -334,13 +334,13 @@ body {
 ========================= */
 #undo-btn {
   position: absolute;
-  left: 1450px;
+  left: 1355px;
   top: 850px;
   background: #8e44ad;
   color: white;
   border: none;
   border-radius: 10px;
-  width: 160px;
+  width: 255px;
   height: 45px;
   font-size: 15px;
   font-weight: bold;
