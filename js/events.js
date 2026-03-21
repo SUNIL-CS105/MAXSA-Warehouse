@@ -11,9 +11,9 @@ window.setupEventListeners = function setupEventListeners() {
     }
 
     const itemId = document.getElementById('new-item').value.trim();
-    const q = parseInt(document.getElementById('new-q').value, 10);
+    const q = parseFloat(document.getElementById('new-q').value);
 
-    if (!itemId || isNaN(q) || q < 1) {
+    if (!itemId || !window.isValidQuantity(q)) {
       alert("Enter valid Item ID and Quantity.");
       return;
     }
