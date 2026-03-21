@@ -349,27 +349,39 @@ body {
   opacity: 0.95;
 }
 
+
 /* =========================
    UNDO BUTTON
 ========================= */
 #undo-btn {
-  position: absolute;
-  right: 16px;
-  bottom: 20px;
+  position: absolute; /* Keep this */
+  
+  /* --- NEW COORDINATES TO ALIGN BELOW SHIPPED --- */
+  left: 1450px;       /* Aligns with the left side of Shipped */
+  top: 850px;        /* 1100 (Shipped Top) + 80 (Height) + 10 (Gap) */
+
+  /* --- YOUR STYLING (Kept your purple theme) --- */
   background: #8e44ad;
   color: white;
   border: none;
-  border-radius: 10px; /* 👈 changed */
-  padding: 12px 20px;  /* 👈 better than fixed width/height */
+  border-radius: 10px;
+  width: 160px;       /* Matches Shipped zone width exactly */
+  height: 45px;       /* Standard button height */
   font-size: 15px;
   font-weight: bold;
   cursor: pointer;
   z-index: 1300;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+  transition: transform 0.1s;
 }
 
 #undo-btn:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.15);
+  transform: scale(1.02);
+}
+
+#undo-btn:active {
+  transform: scale(0.98);
 }
 
 /* =========================
