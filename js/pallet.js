@@ -2,7 +2,7 @@ window.Pallet = class Pallet {
   constructor(id, itemId, quantity, location) {
     this.id = id;
     this.itemId = itemId;
-    this.quantity = quantity;
+    this.quantity = Number(quantity);
     this.location = location || "New_#";
 
     this.el = document.createElement("div");
@@ -11,12 +11,18 @@ window.Pallet = class Pallet {
 
     this.el.dataset.id = id;
     this.el.dataset.itemId = itemId;
-    this.el.dataset.quantity = quantity;
+    this.el.dataset.quantity = this.quantity;
     this.el.dataset.location = this.location;
+
+    this.mergeArrow = document.createElement("div");
+    this.mergeArrow.className = "merge-arrow";
+    this.mergeArrow.innerHTML = "+";
 
     this.splitArrow = document.createElement("div");
     this.splitArrow.className = "split-arrow";
     this.splitArrow.innerHTML = "◮";
+
+    this.el.appendChild(this.mergeArrow);
     this.el.appendChild(this.splitArrow);
 
     this.updateText();
@@ -24,7 +30,8 @@ window.Pallet = class Pallet {
   }
 
   updateText() {
-    this.el.innerHTML = `${this.itemId}<br>Q: ${this.quantity}`;
+    this.el.innerHTML = `${this.itemId}<br>Q: ${window.formatQuantity(this.quantity)}`;
+    this.el.appendChild(this.mergeArrow);
     this.el.appendChild(this.splitArrow);
     this.el.dataset.quantity = this.quantity;
     this.el.dataset.location = this.location;
@@ -32,16 +39,18 @@ window.Pallet = class Pallet {
     if (!window.editMode) {
       this.el.classList.add("view-only");
       this.splitArrow.classList.add("disabled");
+      this.mergeArrow.classList.add("disabled");
     } else {
       this.el.classList.remove("view-only");
       this.splitArrow.classList.remove("disabled");
+      this.mergeArrow.classList.remove("disabled");
     }
   }
 
   addEventListeners() {
     this.el.addEventListener("pointerdown", (e) => {
       if (!window.editMode) return;
-      if (e.target === this.splitArrow) return;
+      if (e.target === this.splitArrow || e.target === this.mergeArrow) return;
 
       e.preventDefault();
 
@@ -115,37 +124,96 @@ window.Pallet = class Pallet {
         return;
       }
 
-      const maxSplit = this.quantity - 1;
-      if (maxSplit < 1) {
-        alert("Cannot split a quantity of 1.");
+      const maxSplit = this.quantity - 0.01;
+      if (maxSplit <= 0) {
+        alert("Cannot split this pallet.");
         return;
       }
 
       const splitQ = prompt(
-        `Enter quantity to split from "${this.itemId}" (max ${maxSplit}):`,
-        Math.floor(this.quantity / 2)
+        `Enter quantity to split from "${this.itemId}" (max ${window.formatQuantity(maxSplit)}):`,
+        window.formatQuantity(this.quantity / 2)
       );
 
-      const num = parseInt(splitQ, 10);
+      const num = parseFloat(splitQ);
 
-      if (!isNaN(num) && num > 0 && num < this.quantity) {
-        this.quantity -= num;
-        this.updateText();
-
-        window.createNewPallet(this.itemId, num, this.location, false);
-
-        window.recordHistory({
-          action: 'split',
-          itemId: this.itemId,
-          quantity: num,
-          fromLocation: this.location,
-          toLocation: this.location
-        });
-
-        window.saveWarehouseData();
-        window.adjustPalletSizesAtLocation(this.location);
-        window.updateInventorySummary();
+      if (!window.isValidQuantity(num) || num >= this.quantity) {
+        alert("Enter a valid split quantity.");
+        return;
       }
+
+      this.quantity = window.roundQuantity(this.quantity - num);
+      this.updateText();
+
+      window.createNewPallet(this.itemId, num, this.location, false);
+
+      window.recordHistory({
+        action: 'split',
+        itemId: this.itemId,
+        quantity: num,
+        fromLocation: this.location,
+        toLocation: this.location
+      });
+
+      window.saveWarehouseData();
+      window.adjustPalletSizesAtLocation(this.location);
+      window.updateInventorySummary();
+    });
+
+    this.mergeArrow.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      if (!window.editMode) {
+        alert("Edit mode is OFF. Turn it ON to merge into pallets.");
+        return;
+      }
+
+      const enteredItemId = prompt(
+        `Enter Product ID to merge into this pallet (${this.itemId}):`,
+        this.itemId
+      );
+
+      if (enteredItemId === null) return;
+
+      const normalizedEntered = String(enteredItemId).trim();
+      if (!normalizedEntered) {
+        alert("Product ID is required.");
+        return;
+      }
+
+      if (normalizedEntered.toLowerCase() !== String(this.itemId).trim().toLowerCase()) {
+        alert("Error: Product ID does not match this pallet.");
+        return;
+      }
+
+      const addQtyInput = prompt(
+        `Enter quantity to add to "${this.itemId}":`,
+        "1"
+      );
+
+      if (addQtyInput === null) return;
+
+      const addQty = parseFloat(addQtyInput);
+
+      if (!window.isValidQuantity(addQty)) {
+        alert("Enter a valid quantity.");
+        return;
+      }
+
+      this.quantity = window.roundQuantity(this.quantity + addQty);
+      this.updateText();
+
+      window.recordHistory({
+        action: 'merge',
+        itemId: this.itemId,
+        quantity: addQty,
+        fromLocation: this.location,
+        toLocation: this.location
+      });
+
+      window.saveWarehouseData();
+      window.adjustPalletSizesAtLocation(this.location);
+      window.updateInventorySummary();
     });
   }
 
