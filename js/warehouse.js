@@ -1,5 +1,5 @@
 window.CELL_WIDTH = 90;
-window.CELL_HEIGHT = 50;
+window.CELL_HEIGHT = 60;
 
 window.GRID_LEFT = 60;
 window.HEADER_TOP = 0;
@@ -453,8 +453,8 @@ window.scaleGrid = function scaleGrid() {
   const availableWidth = stage.clientWidth - 12;
   const availableHeight = stage.clientHeight - 12;
 
-  const originalWidth = 1798;
-  const originalHeight = 1488;
+  const originalWidth = 2000;
+  const originalHeight = 1650;
 
   window.scale = Math.min(availableWidth / originalWidth, availableHeight / originalHeight, 1);
 
