@@ -1,5 +1,5 @@
 window.CELL_WIDTH = 80;
-window.CELL_HEIGHT = 50;
+window.CELL_HEIGHT = 52;
 
 window.GRID_LEFT = 60;
 window.HEADER_TOP = 0;
