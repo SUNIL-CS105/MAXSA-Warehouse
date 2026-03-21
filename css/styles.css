@@ -285,15 +285,19 @@ body {
 }
 
 #add-product-panel {
-  width: 255px
+  position:absolute;
+  width: 255px;
   top: 650px;
   left: 1355px;
   background: #27ae60;
   z-index: 120;
+  padding:10px;
+  border-radius:8px;
 }
 
 #add-product-panel input {
-  width: calc(100% - 12px);
+  box-sizing: border-box;
+  width: 100%;
   margin-bottom: 8px;
   padding: 8px 6px;
   border: none;
