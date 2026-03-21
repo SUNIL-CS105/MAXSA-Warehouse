@@ -79,6 +79,15 @@ body {
   transform: translateY(1px);
 }
 
+#training-btn {
+  background: #6c5ce7;
+  min-width: 110px;
+}
+
+#training-btn:hover {
+  filter: brightness(1.08);
+}
+
 #edit-mode-btn {
   background: #16a085;
 }
@@ -320,26 +329,19 @@ body {
   pointer-events: none;
 }
 
-.view-only-hint {
-  font-weight: normal;
-  font-size: 12px;
-  margin-top: 8px;
-  opacity: 0.95;
-}
-
 /* =========================
    UNDO BUTTON
 ========================= */
 #undo-btn {
   position: absolute;
   left: 1450px;
-  top: 900px;
+  top: 850px;
   background: #8e44ad;
   color: white;
   border: none;
   border-radius: 10px;
-  width: 200px;
-  height: 80px;
+  width: 160px;
+  height: 45px;
   font-size: 15px;
   font-weight: bold;
   cursor: pointer;
@@ -513,4 +515,95 @@ body {
   color: white;
   font-size: 1.5rem;
   z-index: 3500;
+}
+
+/* =========================
+   TRAINING MODAL
+========================= */
+.training-modal-content {
+  max-width: 760px;
+  padding: 24px;
+}
+
+#training-title {
+  margin-bottom: 14px;
+  color: #1f2d3d;
+}
+
+#training-body {
+  min-height: 260px;
+  background: #f7f9fc;
+  border: 1px solid #d8e1ea;
+  border-radius: 10px;
+  padding: 20px;
+  box-sizing: border-box;
+  line-height: 1.6;
+}
+
+.training-step-badge {
+  display: inline-block;
+  background: #6c5ce7;
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+
+.training-step-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #1f2d3d;
+}
+
+.training-step-text {
+  font-size: 16px;
+  color: #2d3436;
+  margin-bottom: 14px;
+}
+
+.training-step-tip {
+  background: #eafaf1;
+  border-left: 5px solid #27ae60;
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: #1f2d3d;
+  font-size: 14px;
+}
+
+.training-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.training-nav-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+  background: #34495e;
+  cursor: pointer;
+}
+
+.training-nav-btn:hover {
+  filter: brightness(1.08);
+}
+
+.training-nav-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+#training-progress {
+  font-weight: bold;
+  color: #2c3e50;
+  min-width: 70px;
+  text-align: center;
 }
