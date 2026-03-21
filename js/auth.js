@@ -1,3 +1,16 @@
+window.ALLOWED_COMPANY_NAME = "maxsa innovations and llc";
+
+window.normalizeCompanyName = function normalizeCompanyName(name) {
+  return String(name || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+};
+
+window.isAllowedCompanyName = function isAllowedCompanyName(name) {
+  return window.normalizeCompanyName(name) === window.ALLOWED_COMPANY_NAME;
+};
+
 window.initAuth = function initAuth() {
   firebase.auth().onAuthStateChanged(user => {
     const loginContainer = document.getElementById('login-container');
@@ -49,15 +62,32 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   if (signupBtn) {
-    signupBtn.addEventListener('click', () => {
+    signupBtn.addEventListener('click', async () => {
+      const companyName = document.getElementById('signup-company').value.trim();
       const email = document.getElementById('signup-email').value.trim();
       const password = document.getElementById('signup-password').value;
 
-      firebase.auth().createUserWithEmailAndPassword(email, password)
-        .then(() => {
-          alert("Sign up successful! You are now logged in.");
-        })
-        .catch(error => alert(error.message));
+      if (!window.isAllowedCompanyName(companyName)) {
+        alert("This company doesn't have an account.");
+        return;
+      }
+
+      try {
+        const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+
+        if (cred && cred.user) {
+          await window.database.ref(`warehouse/users/${cred.user.uid}`).set({
+            email,
+            companyName,
+            companyNameNormalized: window.normalizeCompanyName(companyName),
+            createdAt: Date.now()
+          });
+        }
+
+        alert("Sign up successful! You are now logged in.");
+      } catch (error) {
+        alert(error.message);
+      }
     });
   }
 
