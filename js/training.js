@@ -1,7 +1,7 @@
 // --- 1. CONFIGURATION: Add "target" labels to your steps ---
 window.trainingSteps = [
   {
-    title: "Welcome to the Warehouse Map",
+    title: "Welcome to MAXSA's Warehouse",
     text: "This training will walk you through all major features. Watch the screen for highlights!",
     tip: "Tip: The guide will stay in the corner so you can see the map.",
     target: null 
