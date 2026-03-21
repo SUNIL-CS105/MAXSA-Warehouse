@@ -1,85 +1,99 @@
-window.initAuth = function initAuth() {
-  firebase.auth().onAuthStateChanged(user => {
-    const loginContainer = document.getElementById('login-container');
-    const signupContainer = document.getElementById('signup-container');
-    const warehouseApp = document.getElementById('warehouse-app');
-    const headerBar = document.getElementById('app-header');
+window.Pallet = class Pallet {
+  constructor(id, itemId, quantity, location) {
+    this.id = id;
+    this.itemId = itemId;
+    this.quantity = parseFloat(quantity); // Use float for decimals
+    this.location = location || "New_#";
 
-    if (user) {
-      if (loginContainer) loginContainer.style.display = 'none';
-      if (signupContainer) signupContainer.style.display = 'none';
-      if (warehouseApp) warehouseApp.style.display = 'block';
-      if (headerBar) headerBar.style.display = 'flex';
+    this.el = document.createElement("div");
+    this.el.className = "pallet";
+    
+    // Split Button (Right side)
+    this.splitBtn = document.createElement("div");
+    this.splitBtn.className = "split-arrow";
+    this.splitBtn.innerHTML = "◮";
+    
+    // Add Button (Top Left - New Feature)
+    this.addBtn = document.createElement("div");
+    this.addBtn.className = "add-btn";
+    this.addBtn.innerHTML = "+";
 
-      if (typeof window.initWarehouseApp === 'function') {
-        window.initWarehouseApp();
-      }
+    this.el.appendChild(this.splitBtn);
+    this.el.appendChild(this.addBtn);
+    this.updateText();
+    this.addEventListeners();
+  }
 
-      if (typeof window.loadWarehouseData === 'function') {
-        window.loadWarehouseData();
-      }
-
-      if (typeof window.applyEditModeUI === 'function') {
-        window.applyEditModeUI();
-      }
+  updateText() {
+    // Show decimals if they exist
+    const displayQty = Number.isInteger(this.quantity) ? this.quantity : this.quantity.toFixed(2);
+    this.el.innerHTML = `${this.itemId}<br>Q: ${displayQty}`;
+    this.el.appendChild(this.splitBtn);
+    this.el.appendChild(this.addBtn);
+    
+    if (!window.editMode) {
+      this.el.classList.add("view-only");
     } else {
-      if (loginContainer) loginContainer.style.display = 'flex';
-      if (signupContainer) signupContainer.style.display = 'none';
-      if (warehouseApp) warehouseApp.style.display = 'none';
-      if (headerBar) headerBar.style.display = 'none';
+      this.el.classList.remove("view-only");
     }
-  });
+  }
+
+  addEventListeners() {
+    // Merge Logic (+)
+    this.addBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!window.editMode) return;
+      
+      const sourceId = prompt("Enter the ID of the pallet to take quantity FROM:");
+      const source = window.pallets.find(p => p.id === sourceId);
+      
+      if (!source) return alert("Pallet ID not found.");
+      if (source.itemId !== this.itemId) return alert("Error: Product IDs do not match!");
+      if (source.id === this.id) return alert("Cannot merge a pallet with itself.");
+
+      const amt = parseFloat(prompt(`How much to move? (Current source quantity: ${source.quantity})`));
+      if (isNaN(amt) || amt <= 0 || amt > source.quantity) return alert("Invalid amount.");
+
+      this.quantity += amt;
+      source.quantity -= amt;
+
+      if (source.quantity <= 0) source.remove();
+      else source.updateText();
+      
+      this.updateText();
+      window.saveWarehouseData();
+      window.recordHistory({
+        action: 'merge',
+        itemId: this.itemId,
+        quantity: amt,
+        fromLocation: source.id,
+        toLocation: this.id
+      });
+    });
+
+    // Split Logic
+    this.splitBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!window.editMode) return;
+      const amount = parseFloat(prompt(`Enter quantity to split (Max: ${this.quantity}):`));
+      if (isNaN(amount) || amount <= 0 || amount >= this.quantity) return;
+
+      this.quantity -= amount;
+      this.updateText();
+      window.createNewPallet(this.itemId, amount, this.location);
+      window.saveWarehouseData();
+    });
+
+    // Drag and Drop (Standard pointer events - similar to your original code)
+    this.el.addEventListener("pointerdown", (e) => {
+      if (!window.editMode) return;
+      this.onPointerDown(e);
+    });
+  }
+
+  // ... (Keep your standard onPointerDown, onPointerMove, onPointerUp logic here)
+  remove() {
+    if (this.el.parentNode) this.el.parentNode.removeChild(this.el);
+    window.pallets = window.pallets.filter(p => p !== this);
+  }
 };
-
-document.addEventListener('DOMContentLoaded', function () {
-  const loginBtn = document.getElementById('login-btn');
-  const signupBtn = document.getElementById('signup-btn');
-  const showSignup = document.getElementById('show-signup');
-  const showLogin = document.getElementById('show-login');
-  const logoutBtn = document.getElementById('logout-btn');
-
-  if (loginBtn) {
-    loginBtn.addEventListener('click', () => {
-      const email = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value;
-
-      firebase.auth().signInWithEmailAndPassword(email, password)
-        .catch(error => alert(error.message));
-    });
-  }
-
-  if (signupBtn) {
-    signupBtn.addEventListener('click', () => {
-      const email = document.getElementById('signup-email').value.trim();
-      const password = document.getElementById('signup-password').value;
-
-      firebase.auth().createUserWithEmailAndPassword(email, password)
-        .then(() => {
-          alert("Sign up successful! You are now logged in.");
-        })
-        .catch(error => alert(error.message));
-    });
-  }
-
-  if (showSignup) {
-    showSignup.addEventListener('click', () => {
-      document.getElementById('login-container').style.display = 'none';
-      document.getElementById('signup-container').style.display = 'flex';
-    });
-  }
-
-  if (showLogin) {
-    showLogin.addEventListener('click', () => {
-      document.getElementById('signup-container').style.display = 'none';
-      document.getElementById('login-container').style.display = 'flex';
-    });
-  }
-
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      firebase.auth().signOut();
-    });
-  }
-
-  window.initAuth();
-});
