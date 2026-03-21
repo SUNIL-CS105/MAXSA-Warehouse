@@ -25,7 +25,7 @@ window.locations = {
     startLeft: 980,
     startTop: 0,
     cols: 6,
-    cellWidth: 80,
+    cellWidth: 85,
     cellHeight: 50
   },
   restroomsShelvesTemp: [
@@ -54,8 +54,8 @@ window.locations = {
     { name: 'Temporary14', left: 1070, top: 1150 }
   ],
   dropZones: [
-    { id: "SHIPPED", name: "SHIPPED", left: 1300, top: 1100, width: 160, height: 80, color: '#e74c3c' },
-    { id: "TO-8412-OFFICE", name: "TO-8412-OFFICE", left: 1300, top: 950, width: 160, height: 80, color: '#2980b9' }
+    { id: "SHIPPED", name: "SHIPPED", left: 1420, top: 1100, width: 160, height: 80, color: '#e74c3c' },
+    { id: "TO-8412-OFFICE", name: "TO-8412-OFFICE", left: 1420, top: 950, width: 160, height: 80, color: '#2980b9' }
   ]
 };
 
@@ -453,7 +453,7 @@ window.scaleGrid = function scaleGrid() {
   const availableWidth = stage.clientWidth - 12;
   const availableHeight = stage.clientHeight - 12;
 
-  const originalWidth = 1750;
+  const originalWidth = 1950;
   const originalHeight = 1450;
 
   window.scale = Math.min(availableWidth / originalWidth, availableHeight / originalHeight, 1);
