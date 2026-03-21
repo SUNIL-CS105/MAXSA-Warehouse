@@ -19,6 +19,44 @@ body {
   overflow: auto;
 }
 
+#undo-btn {
+  /* Location */
+  position: fixed;
+  bottom: 90px;
+  right: 90px;
+  z-index: 2000; /* High number ensures it stays ABOVE the pallets */
+
+  /* Shape and Size */
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: 2px solid #d35400; /* A slightly darker border for definition */
+  
+  /* Colors */
+  background-color: #f39c12;
+  color: white;
+  
+  /* Text and Mouse */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  
+  /* Smoothness */
+  transition: transform 0.1s, background-color 0.2s;
+}
+
+#undo-btn:hover {
+  background-color: #e67e22;
+  transform: scale(1.05); /* Slightly grows when you hover */
+}
+
+#undo-btn:active {
+  transform: scale(0.95); /* Shrinks slightly when clicked (feels like a real button) */
+}
+
+
+
+
 /* =========================
    MAP HEADER (attached to map)
 ========================= */
