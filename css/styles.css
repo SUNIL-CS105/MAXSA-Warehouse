@@ -327,9 +327,8 @@ body {
   background: #8e44ad;
   color: white;
   border: none;
-  border-radius: 999px;
-  width: 84px;
-  height: 84px;
+  border-radius: 10px; /* 👈 changed */
+  padding: 12px 20px;  /* 👈 better than fixed width/height */
   font-size: 15px;
   font-weight: bold;
   cursor: pointer;
