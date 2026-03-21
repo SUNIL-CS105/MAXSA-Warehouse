@@ -26,6 +26,7 @@
   <div id="signup-container" style="display:none;">
     <div class="login-box">
       <h2>Warehouse Sign Up</h2>
+      <input type="text" id="signup-company" placeholder="Company's Full Name">
       <input type="email" id="signup-email" placeholder="Email">
       <input type="password" id="signup-password" placeholder="Password">
       <button type="button" id="signup-btn">Sign Up</button>
@@ -58,7 +59,7 @@
         <div id="add-product-panel" class="control-panel">
           <div style="margin-bottom: 8px;">Add Product</div>
           <input type="text" id="new-item" placeholder="Item #" />
-          <input type="number" id="new-q" placeholder="Quantity" min="1" />
+          <input type="number" id="new-q" placeholder="Quantity" min="0.01" step="any" />
           <button type="button" id="add-product-btn">➕ Add New Product</button>
           <div class="view-only-hint">Turn Edit OFF to prevent moving/splitting/adding.</div>
         </div>
