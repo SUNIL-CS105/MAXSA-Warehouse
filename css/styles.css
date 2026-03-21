@@ -334,14 +334,14 @@ body {
 ========================= */
 #undo-btn {
   position: absolute;
-  left: 1455px;
+  left: 1555px;
   top: 850px;
   background: #8e44ad;
   color: white;
   border: none;
   border-radius: 10px;
   width: 255px;
-  height: 45px;
+  height: 90px;
   font-size: 15px;
   font-weight: bold;
   cursor: pointer;
